@@ -1,0 +1,1428 @@
+<meta charset="utf-8">
+<title>Riso Paper Fold</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{
+  /* Palette carried over from the jeanxcrj.com portfolio. */
+  --panel:#ffffff; --ink:#0e0e0e; --dim:#8b8b88; --rule:#e4e3e1;
+  --stage:#ffffff; --ghost:#d9d9d6; --hover:#e6e5e2; --accent:#6a5ae8;
+  --radius:4px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --face: 'Milling', var(--mono);
+  --display: 'Milling Display', var(--mono);
+}
+
+/* Milling (205TF) is referenced from the local machine only — the trial
+   licence does not cover web embedding, so no font file ships with this
+   repo. Anyone without it installed gets the mono fallback. */
+@font-face{
+  font-family:'Milling';
+  src:local('Milling Trial Simplex 0,75mm'), local('MillingTrial-Simplex0,75mm');
+  font-weight:400; font-style:normal; font-display:swap;
+}
+@font-face{
+  font-family:'Milling';
+  src:local('Milling Trial Simplex 0,75mm Italic'), local('MillingTrial-Simplex0,75mmItalic');
+  font-weight:400; font-style:italic; font-display:swap;
+}
+@font-face{
+  font-family:'Milling Display';
+  src:local('Milling Trial Triplex 1mm'), local('MillingTrial-Triplex1mm');
+  font-weight:400; font-style:normal; font-display:swap;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--face);overflow:hidden}
+#app{display:grid;grid-template-columns:308px 1fr;height:100vh;width:100vw}
+
+/* ---------- panel ---------- */
+#panel{background:var(--panel);border-right:1px solid var(--rule);display:flex;flex-direction:column;min-height:0}
+#head{padding:15px 16px 14px;border-bottom:1px solid var(--rule)}
+#wordmark{font-family:var(--display);font-size:15px;letter-spacing:-0.04em;font-weight:400;text-transform:uppercase;line-height:1}
+#scroll{overflow-y:auto;flex:1;min-height:0;padding-bottom:6px}
+#scroll::-webkit-scrollbar{width:9px}
+#scroll::-webkit-scrollbar-thumb{background:var(--ghost);border:3px solid var(--panel)}
+
+.sec{border-bottom:1px solid var(--rule);padding:13px 16px 15px}
+.sec>h2{margin:0 0 11px;font-size:9px;letter-spacing:0.05em;color:var(--dim);text-transform:uppercase;font-weight:500;display:flex;justify-content:space-between}
+.sec>h2 b{color:#bdbcb9;font-weight:500;letter-spacing:0.01em}
+#imgReset{cursor:pointer}
+#imgReset:hover{color:var(--accent)}
+
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.mode{font:inherit;font-size:9.5px;letter-spacing:-0.02em;padding:7px 6px;background:#fff;border:1px solid var(--rule);border-radius:var(--radius);color:#3d3d3b;cursor:pointer;text-align:left;transition:background .12s,color .12s}
+.mode:hover{background:var(--hover)}
+.mode[data-on="1"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.mode[disabled]{opacity:.3;cursor:not-allowed;background:#fff}
+.mode[disabled]:hover{background:#fff}
+
+.row{margin-bottom:11px}
+.row:last-child{margin-bottom:0}
+.lab{display:flex;justify-content:space-between;align-items:baseline;font-size:9.5px;letter-spacing:0.02em;text-transform:uppercase;color:#3d3d3b;margin-bottom:5px}
+.lab i{font-style:normal;color:var(--dim);font-variant-numeric:tabular-nums;font-size:9.5px;letter-spacing:-0.03em}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:12px;background:transparent;cursor:ew-resize;display:block}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--rule)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;background:var(--ink);margin-top:-4px;border-radius:0}
+input[type=range]:hover::-webkit-slider-thumb{background:var(--accent)}
+
+.inks{display:flex;gap:6px;margin-top:2px}
+.ink{position:relative;flex:1;height:30px;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden}
+.ink input{position:absolute;inset:-6px;width:150%;height:150%;border:0;padding:0;cursor:pointer;background:none}
+.ink[data-off="1"]{opacity:.22;pointer-events:none}
+.swatches{display:flex;flex-wrap:wrap;gap:3px;margin-top:7px}
+.sw{width:13px;height:13px;border:1px solid rgba(0,0,0,.12);border-radius:var(--radius);cursor:pointer;padding:0}
+.seg{display:flex;gap:4px}
+.seg button{flex:1;font:inherit;font-size:9.5px;padding:6px;background:#fff;border:1px solid var(--rule);border-radius:var(--radius);color:#3d3d3b;cursor:pointer}
+.seg button[data-on="1"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.seg+.row{margin-top:11px}
+.sec[data-off="1"] .row{opacity:.28;pointer-events:none}
+
+#foot{border-top:1px solid var(--rule);padding:11px 16px;display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--panel)}
+#foot button{font:inherit;font-size:10px;letter-spacing:0.04em;text-transform:uppercase;padding:10px 6px;border:1px solid var(--ink);border-radius:var(--radius);background:var(--ink);color:#fff;cursor:pointer}
+#foot button.ghost{background:transparent;color:var(--ink)}
+#foot button:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+#foot .wide{grid-column:1/-1}
+
+/* ---------- stage ---------- */
+#stage{position:relative;overflow:hidden;background:var(--stage)}
+canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+canvas.drag{cursor:grabbing}
+/* z-index is load-bearing: the WebGL canvas is composited onto its own
+   layer, so a positioned sibling without a stacking context paints under it. */
+#secSun{position:absolute;top:14px;right:14px;width:214px;z-index:2;background:var(--panel);
+  border:1px solid var(--rule);border-radius:var(--radius);padding:12px 14px 14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.045)}
+#gizmo{position:absolute;right:16px;bottom:36px;width:112px;height:112px;pointer-events:none;
+  mix-blend-mode:multiply;transition:opacity .15s}
+#gizmo.off{opacity:0}
+#gizmo text{font:400 8px var(--face);letter-spacing:0.04em}
+#drop{position:absolute;inset:0;display:none;place-items:center;background:rgba(238,237,235,.86);border:1px dashed #bdbcb9;font-size:11px;letter-spacing:0.1em;text-transform:uppercase}
+#drop.on{display:grid}
+#err{position:absolute;inset:20px;display:none;white-space:pre-wrap;font-size:11px;color:#7a1010;background:#fff;padding:16px;overflow:auto}
+
+/* ---------- narrow screens ----------
+   The sheet takes the top of the screen and the controls stack beneath it.
+   Sunlight is moved back into that stack by placeSun(), since a floating
+   card would cover most of a phone-sized render. */
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:48vh 1fr;height:100vh;height:100dvh}
+  #stage{grid-row:1;min-height:0}                     /* the sheet leads */
+  #panel{grid-row:2;border-right:0;border-top:1px solid var(--rule);min-height:0}
+  #secSun{position:static;width:auto;z-index:auto;box-shadow:none;
+    border:0;border-bottom:1px solid var(--rule);border-radius:0;padding:13px 16px 15px}
+  #gizmo{width:82px;height:82px;right:10px;bottom:10px}
+  #foot{padding:10px 14px}
+}
+</style>
+
+<div id="app">
+  <aside id="panel">
+    <div id="head">
+      <div id="wordmark">Riso Paper Fold</div>
+    </div>
+    <div id="scroll">
+      <div class="sec">
+        <h2>Deformation<b id="seedLab">seed 0</b></h2>
+        <div class="modes" id="modes"></div>
+      </div>
+      <div class="sec" id="secPaper"><h2>Sheet</h2></div>
+      <div class="sec" id="secAxis"><h2>Axis</h2></div>
+      <div class="sec" id="secImage"><h2>Image<b id="imgReset" title="reset image adjustments">reset</b></h2></div>
+      <div class="sec" id="secPrint"><h2>Print</h2></div>
+      <div class="sec">
+        <h2>Ink</h2>
+        <div class="seg" id="inkSeg"></div>
+        <div class="inks" id="inks"></div>
+        <div class="swatches" id="swatches"></div>
+      </div>
+    </div>
+    <div id="foot">
+      <button class="wide" id="bRand">Randomize ⏎</button>
+      <button class="ghost" id="bUpload">Upload</button>
+      <button class="ghost" id="bExport">Export</button>
+    </div>
+  </aside>
+  <main id="stage">
+    <canvas id="gl"></canvas>
+    <svg id="gizmo" viewBox="0 0 112 112"></svg>
+    <div class="sec" id="secSun"><h2>Sunlight</h2>
+      <div class="seg" id="sunSeg"></div>
+    </div>
+    <div id="drop">release to print</div>
+    <div id="err"></div>
+  </main>
+</div>
+<input type="file" id="file" accept="image/*" style="display:none">
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b)=>v<a?a:v>b?b:v;
+const TAU = Math.PI*2, D2R = Math.PI/180;
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const MAXF = 10;
+const MODES = [
+  ['flat','Flat'],['corner','Corner curl'],['edge','Edge curl'],
+  ['diagonal','Diagonal fold'],['wave','Loose wave'],
+  ['crumple','Crumpled'],['twist','Twist strip'],
+  ['multi','Multi-fold'],['sculpt','Sculpture']
+];
+/* Modes still being tuned — listed but not selectable yet. */
+const OFF_MODES = new Set(['crumple','twist','multi','sculpt']);
+/* Modes Randomize may land on — Flat is a choice, never a surprise. */
+const LIVE_MODES = MODES.filter(([id])=>!OFF_MODES.has(id)&&id!=='flat').map(([id])=>id);
+
+const RISO = ['#6a5ae8','#063ca7','#2b1b8f','#ff48b0','#f15060','#ff6c2f','#ffe800','#00a95c',
+              '#0078bf','#3d5588','#765ba7','#00838a','#914e72','#5ec8e5','#1a1a1a'];
+
+const P = {
+  mode:'flat', seed:(Math.random()*1e6)|0,
+  curl:0.62, curlDir:132, folds:3, sharp:0.74, distort:0.34, random:0.5,
+  thick:0.34, translu:0.46, shadow:0.68,
+  grain:0.5, halftone:1.45, bleed:0.42, reg:0.32, contrast:0.52,
+  inkN:1, inks:['#6a5ae8','#063ca7','#ffe800'],
+  paper:0.5, backdrop:1, exposure:0.5, sat:0.5, gamma:1, sharpen:0,
+  sun:0, sunAmt:0.62, sunSize:0.5, sunSoft:0.42, sunSpeed:0.45,
+  axisX:0, axisY:16, axisSpin:-7, zoom:1
+};
+
+const SLIDERS = {
+  secPaper:[
+    ['curl','Curl amount',0,1,0.01],
+    ['curlDir','Curl direction',0,360,1,v=>Math.round(v)+'°'],
+    ['folds','Fold count',1,8,1,v=>v|0],
+    ['sharp','Fold sharpness',0,1,0.01],
+    ['distort','Distortion',0,1,0.01],
+    ['translu','Paper translucency',0,1,0.01],
+    ['shadow','Shadow strength',0,1,0.01],
+  ],
+  secAxis:[
+    ['axisX','Axis tilt',-75,75,0.5,v=>Math.round(v)+'°'],
+    ['axisY','Axis swing',-75,75,0.5,v=>Math.round(v)+'°'],
+    ['axisSpin','Axis spin',-180,180,0.5,v=>Math.round(v)+'°'],
+  ],
+  secPrint:[
+    ['grain','Grain amount',0,1,0.01],
+    ['halftone','Halftone size',0,8,0.05,v=>v<0.9?'off':v.toFixed(1)+'px'],
+    ['bleed','Ink bleed',0,1,0.01],
+    ['reg','Registration offset',0,1,0.01],
+  ],
+  secImage:[
+    ['exposure','Brightness',0,1,0.01],
+    ['contrast','Contrast',0,1,0.01],
+    ['sat','Saturation',0,1,0.01],
+    ['gamma','Midtones',0.4,2.5,0.01,v=>v.toFixed(2)],
+    ['sharpen','Sharpen',0,1,0.01],
+  ],
+  secSun:[
+    ['sunAmt','Sun strength',0,1,0.01],
+    ['sunSize','Leaf gap size',0,1,0.01],
+    ['sunSoft','Penumbra',0,1,0.01],
+    ['sunSpeed','Drift speed',0,1,0.01,v=>v<0.005?'still':v.toFixed(2).replace(/^0\./,'.')],
+  ],
+};
+
+/* ============================================================
+   RNG + MATH
+   ============================================================ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function m4id(){return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1])}
+function m4mul(a,b,o){o=o||new Float32Array(16);
+  for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s}
+  return o}
+function m4persp(fov,asp,n,f){const t=1/Math.tan(fov/2),o=new Float32Array(16);
+  o[0]=t/asp;o[5]=t;o[10]=(f+n)/(n-f);o[11]=-1;o[14]=2*f*n/(n-f);return o}
+function m4ortho(l,r,b,t,n,f){const o=m4id();
+  o[0]=2/(r-l);o[5]=2/(t-b);o[10]=-2/(f-n);o[12]=-(r+l)/(r-l);o[13]=-(t+b)/(t-b);o[14]=-(f+n)/(f-n);return o}
+function m4trans(x,y,z){const o=m4id();o[12]=x;o[13]=y;o[14]=z;return o}
+function m4rotX(a){const c=Math.cos(a),s=Math.sin(a),o=m4id();o[5]=c;o[6]=s;o[9]=-s;o[10]=c;return o}
+function m4rotY(a){const c=Math.cos(a),s=Math.sin(a),o=m4id();o[0]=c;o[2]=-s;o[8]=s;o[10]=c;return o}
+function m4rotZ(a){const c=Math.cos(a),s=Math.sin(a),o=m4id();o[0]=c;o[1]=s;o[4]=-s;o[5]=c;return o}
+function m4look(eye,ctr,up){
+  let z=[eye[0]-ctr[0],eye[1]-ctr[1],eye[2]-ctr[2]];let l=Math.hypot(...z);z=z.map(v=>v/l);
+  let x=[up[1]*z[2]-up[2]*z[1],up[2]*z[0]-up[0]*z[2],up[0]*z[1]-up[1]*z[0]];l=Math.hypot(...x)||1;x=x.map(v=>v/l);
+  let y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];
+  return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0,
+    -(x[0]*eye[0]+x[1]*eye[1]+x[2]*eye[2]), -(y[0]*eye[0]+y[1]*eye[1]+y[2]*eye[2]), -(z[0]*eye[0]+z[1]*eye[1]+z[2]*eye[2]),1])}
+function hex2rgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16)/255,parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255]}
+
+/* Least-squares subtractive ink separation.
+   Ink i absorbs light per Beer-Lambert: paper * prod(mix(1,ink_i,c_i))
+   log(img) = A * c   where A columns are log(ink_i).  c = (AtA)^-1 At log(img)
+   Returns a 3x3 (row i = coefficients for ink i) flattened COLUMN-MAJOR for GLSL. */
+function separationMatrix(inks,n){
+  const A=[]; // A[ch][i]
+  for(let ch=0;ch<3;ch++){A.push([]);for(let i=0;i<n;i++){
+    const c=hex2rgb(inks[i])[ch]; A[ch].push(Math.log(Math.max(c,0.012)));}}
+  // AtA (n x n), At (n x 3)
+  const AtA=[],At=[];
+  for(let i=0;i<n;i++){AtA.push([]);At.push([]);
+    for(let j=0;j<n;j++){let s=0;for(let ch=0;ch<3;ch++)s+=A[ch][i]*A[ch][j];AtA[i].push(s)}
+    for(let ch=0;ch<3;ch++)At[i].push(A[ch][i]);}
+  for(let i=0;i<n;i++)AtA[i][i]+=1e-3; // ridge, keeps 3-ink systems stable
+  // gauss-jordan solve AtA * M = At  -> M (n x 3)
+  const aug=AtA.map((r,i)=>r.concat(At[i]));
+  for(let c=0;c<n;c++){
+    let piv=c;for(let r=c+1;r<n;r++)if(Math.abs(aug[r][c])>Math.abs(aug[piv][c]))piv=r;
+    [aug[c],aug[piv]]=[aug[piv],aug[c]];
+    const d=aug[c][c]||1e-6;
+    for(let k=c;k<n+3;k++)aug[c][k]/=d;
+    for(let r=0;r<n;r++)if(r!==c){const f=aug[r][c];for(let k=c;k<n+3;k++)aug[r][k]-=f*aug[c][k]}
+  }
+  const M=[[0,0,0],[0,0,0],[0,0,0]];
+  for(let i=0;i<n;i++)for(let ch=0;ch<3;ch++)M[i][ch]=aug[i][n+ch];
+  // column-major upload => transpose of the math matrix
+  return new Float32Array([M[0][0],M[1][0],M[2][0], M[0][1],M[1][1],M[2][1], M[0][2],M[1][2],M[2][2]]);
+}
+
+/* ============================================================
+   COMPOSITION  — builds the fold stack for the current mode
+   Each fold: material where dot(p.xy,n) > c rotates up by theta
+   about the crease line, over an arc of material-width w
+   (radius = w/theta), so the sheet never stretches.
+   ============================================================ */
+let COMP = null;
+function buildComposition(){
+  const rnd = mulberry32(P.seed|0);
+  const R=(a,b)=>a+(b-a)*rnd();
+  const S=()=>rnd()<0.5?-1:1;
+  const jit=P.random, folds=[];
+  const hw=SHEET.w*0.5, hh=SHEET.h*0.5, span=Math.hypot(hw,hh);
+  // crease radius floor comes from paper thickness — thick stock can't crease sharp
+  const minW = 0.006 + P.thick*0.055;
+  const creaseW = ()=>Math.max(minW, (0.16-0.148*P.sharp)*(0.75+R(0,0.6)*jit));
+  const push=(nx,ny,c,th,w)=>{
+    if(folds.length>=MAXF) return;
+    const l=Math.hypot(nx,ny)||1;
+    folds.push({n:[nx/l,ny/l],c,th,w:Math.max(w,0.005)});
+  };
+  const dir = (P.curlDir + R(-28,28)*jit)*D2R;
+  const dx=Math.cos(dir), dy=Math.sin(dir);
+  const reach = d => Math.abs(dx)*hw + Math.abs(dy)*hh; // half-extent along dir
+
+  const addCurl=(nx,ny,depth,turns)=>{
+    const l=Math.hypot(nx,ny); nx/=l; ny/=l;
+    const edge = Math.abs(nx)*hw + Math.abs(ny)*hh;
+    push(nx,ny, edge-depth, turns, depth*R(0.85,1.05));
+  };
+  const secondary=(k)=>{ // extra light creases so Fold count matters in every mode
+    for(let i=0;i<k;i++){
+      const a=R(0,TAU);
+      push(Math.cos(a),Math.sin(a), R(-0.45,0.45)*span, S()*R(0.12,0.5)*(0.4+P.curl), creaseW()*R(1.2,3.0));
+    }
+  };
+
+  let twistK=0, twistAxis=[1,0], wrinkleBoost=1;
+
+  switch(P.mode){
+    case 'flat':
+      wrinkleBoost=0;
+      break;
+    case 'corner':{
+      const cx=Math.sign(dx||1), cy=Math.sign(dy||1);
+      const n=[cx*hw, cy*hh];
+      addCurl(n[0],n[1], span*(0.30+0.55*P.curl)*R(0.9,1.1), 1.1+5.2*P.curl);
+      secondary(P.folds-1);
+      break;}
+    case 'edge':{
+      const horiz = Math.abs(dx)>Math.abs(dy);
+      const n = horiz?[Math.sign(dx||1),0]:[0,Math.sign(dy||1)];
+      const dep=(horiz?hw:hh)*(0.35+0.95*P.curl)*R(0.9,1.1);
+      addCurl(n[0],n[1],dep,1.0+5.0*P.curl);
+      if(P.folds>1) addCurl(-n[0],-n[1],dep*R(0.4,0.9),(1.0+4.0*P.curl)*R(0.5,1));
+      secondary(Math.max(0,P.folds-2));
+      break;}
+    case 'diagonal':{
+      push(dx,dy, R(-0.25,0.25)*span*jit, Math.PI*(0.5+0.5*P.curl)*R(0.94,1.02), creaseW());
+      secondary(P.folds-1);
+      break;}
+    case 'wave':{
+      const n=P.folds+1, step=(reach()*2)/(n+1);
+      for(let i=0;i<n;i++){
+        const c=-reach()+step*(i+1)+R(-0.3,0.3)*step*jit;
+        const a=dir+R(-0.25,0.25)*jit;
+        const amp=(0.16+0.62*P.curl)*R(0.75,1.25);
+        push(Math.cos(a),Math.sin(a), c, (i%2?-1:1)*amp*(i===0?1:2), step*R(0.55,0.95));
+      }
+      wrinkleBoost=0.6;
+      break;}
+    case 'crumple':{
+      const n=Math.min(MAXF,P.folds+3);
+      for(let i=0;i<n;i++){
+        const a=R(0,TAU);
+        push(Math.cos(a),Math.sin(a), R(-0.5,0.5)*span*(0.55+0.45*jit),
+             S()*R(0.35,1.5)*(0.35+P.curl), creaseW()*R(0.8,2.6));
+      }
+      wrinkleBoost=2.3;
+      break;}
+    case 'twist':{
+      twistAxis=[dx,dy]; twistK=S()*(0.55+2.5*P.curl)*R(0.85,1.15);
+      push(-dy,dx, R(-0.3,0.3)*span, S()*(0.3+1.3*P.curl), creaseW()*R(2,4));
+      secondary(Math.max(0,P.folds-2));
+      wrinkleBoost=0.8;
+      break;}
+    case 'multi':{
+      const n=Math.max(2,P.folds);
+      for(let i=0;i<n;i++){
+        const a=dir + (i/n)*Math.PI*R(0.55,1.45) + R(-0.4,0.4)*jit;
+        const c=R(-0.55,0.55)*span*(0.5+0.5*jit);
+        const th=(2.05+0.95*P.curl)*R(0.86,1.05)*(rnd()<0.22?-1:1);
+        push(Math.cos(a),Math.sin(a), c, th, creaseW());
+      }
+      break;}
+    default:{ // sculpt — mixed vocabulary
+      const ops=2+Math.round(R(0,2)+P.folds*0.4);
+      for(let i=0;i<ops && folds.length<MAXF;i++){
+        const k=rnd();
+        const a=R(0,TAU), nx=Math.cos(a), ny=Math.sin(a);
+        if(k<0.3) addCurl(nx,ny, span*R(0.25,0.8)*(0.4+P.curl), 1.0+5.0*P.curl*R(0.7,1.2));
+        else if(k<0.75) push(nx,ny, R(-0.5,0.5)*span, S()*(1.6+1.4*P.curl)*R(0.7,1.1), creaseW()*R(0.8,1.8));
+        else { const st=R(0.25,0.6)*span;
+          for(let j=0;j<3 && folds.length<MAXF;j++)
+            push(nx,ny, -st+st*j, (j%2?-1:1)*R(0.4,1.1)*(0.4+P.curl), st*0.8); }
+      }
+      if(rnd()<0.45){twistAxis=[dx,dy];twistK=S()*R(0.5,2.2)*(0.4+P.curl)}
+      wrinkleBoost=1.5;
+    }
+  }
+
+  const fold4=new Float32Array(MAXF*4), foldW=new Float32Array(MAXF);
+  folds.forEach((f,i)=>{fold4[i*4]=f.n[0];fold4[i*4+1]=f.n[1];fold4[i*4+2]=f.c;fold4[i*4+3]=f.th;foldW[i]=f.w});
+
+  COMP = {
+    n:folds.length, fold4, foldW, twistK, twistAxis,
+    wrinkle:(0.006+0.075*P.distort)*wrinkleBoost*SHEET.w*0.7,
+    wrinkleScale:1.4+2.6*R(0.7,1.4),
+    seed2:[R(0,40),R(0,40)],
+    offset:[R(-0.06,0.06)*jit, R(-0.06,0.06)*jit],
+    regOff:[[0,0],[R(-1,1),R(-1,1)],[R(-1,1),R(-1,1)]].map(v=>[v[0],v[1]]),
+    edgeRough: 0.35+0.65*P.distort
+  };
+  applyUncoil();
+  $('#seedLab').textContent = 'seed '+(P.seed|0);
+}
+
+/* ============================================================
+   SOURCE IMAGE
+   ============================================================ */
+const SHEET = {w:1.5,h:1.5,ar:1};
+function fitSheet(ar){
+  ar=clamp(ar,0.45,2.2); SHEET.ar=ar;
+  if(ar>=1){SHEET.w=1.5;SHEET.h=1.5/ar}else{SHEET.h=1.5;SHEET.w=1.5*ar}
+}
+function defaultImage(){
+  const c=document.createElement('canvas');c.width=1000;c.height=1300;
+  const x=c.getContext('2d');
+  x.fillStyle='#ffffff';x.fillRect(0,0,1000,1300);
+  x.fillStyle='#0b0b12';
+  x.beginPath();x.arc(500,520,330,0,TAU);x.fill();
+  x.globalCompositeOperation='destination-out';
+  x.beginPath();x.arc(500,520,238,0,TAU);x.fill();
+  x.beginPath();x.moveTo(120,470);x.lineTo(880,300);x.lineTo(880,430);x.lineTo(120,600);x.closePath();x.fill();
+  x.globalCompositeOperation='source-over';
+  x.fillStyle='#0b0b12';
+  x.beginPath();
+  x.moveTo(330,760);x.bezierCurveTo(360,600,520,560,600,640);
+  x.bezierCurveTo(690,720,700,880,640,960);
+  x.bezierCurveTo(560,1050,380,1010,330,900);x.closePath();x.fill();
+  x.fillStyle='#ffffff';
+  for(let i=0;i<7;i++){x.fillRect(300+i*52,700,26,320)}
+  x.fillStyle='#0b0b12';
+  for(let i=0;i<30;i++){const w=520-i*17;if(w>0)x.fillRect(120,1060+i*7,w,3)}
+  x.save();x.translate(500,1230);
+  x.font='700 132px ui-monospace, monospace';x.textAlign='center';
+  x.fillStyle='#0b0b12';x.fillText('PAPER',0,0);x.restore();
+  return c;
+}
+
+/* ============================================================
+   SHADERS
+   ============================================================ */
+const NOISE = `
+float hash21(vec2 p){p=fract(p*vec2(123.34,345.45));p+=dot(p,p+34.345);return fract(p.x*p.y);}
+float vnoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+  float a=hash21(i),b=hash21(i+vec2(1.0,0.0)),c=hash21(i+vec2(0.0,1.0)),d=hash21(i+vec2(1.0,1.0));
+  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
+float fbm(vec2 p){float s=0.0,a=0.5;for(int i=0;i<5;i++){s+=a*vnoise(p);p*=2.03;a*=0.5;}return s;}
+mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
+`;
+
+/* Arc-length preserving bend. Material past the crease plane rolls onto a
+   cylinder of radius w/theta, then continues straight — this is what makes a
+   crease read as folded paper instead of a stretched digital warp. */
+const DEFORM = NOISE + `
+uniform vec4 uFold[${MAXF}];
+uniform float uFoldW[${MAXF}];
+uniform int uFoldN;
+uniform vec2 uSheet, uTwistAxis, uSeed2;
+uniform float uTwistK, uWrinkle, uWrinkScale, uPly;
+
+float wrinkle(vec2 uv){
+  vec2 q=uv*uWrinkScale+uSeed2;
+  float r=(vnoise(q*1.0)-0.5)*1.0;                       // slack in the sheet
+  r+=(1.0-abs(vnoise(q*2.3)*2.0-1.0)-0.5)*0.34;          // soft creases
+  r+=(vnoise(q*6.0)-0.5)*0.07;
+  r+=(vnoise(q*24.0)-0.5)*0.012;                         // stock tooth
+  return r;
+}
+vec3 bendFold(vec3 p, vec2 n, float c, float th, float w){
+  float x=dot(p.xy,n)-c;
+  if(x<=0.0) return p;
+  vec2 a=vec2(n.y,-n.x);           // crease direction; cross(a,n)=+z
+  float y=p.z, z=dot(p.xy,a);
+  float nx,ny,phi;
+  if(abs(th)<1e-4){ nx=x; ny=0.0; phi=0.0; }
+  else{
+    float xc=min(x,w);
+    phi=th*xc/w;
+    float R=w/th;
+    nx=R*sin(phi); ny=R*(1.0-cos(phi));
+    if(x>w){ nx+=(x-w)*cos(th); ny+=(x-w)*sin(th); }
+  }
+  float yy=y+uPly*abs(phi);        // one ply of stock per half-turn
+  nx+=-yy*sin(phi); ny+=yy*cos(phi); // carry off-surface material rigidly
+  return vec3((c+nx)*n + z*a, ny);
+}
+vec3 twistOp(vec3 p, vec2 t, float k){
+  if(abs(k)<1e-4) return p;
+  float ang=k*tanh(dot(p.xy,t)*3.2);
+  vec3 A=vec3(t,0.0);
+  return p*cos(ang)+cross(A,p)*sin(ang)+A*dot(A,p)*(1.0-cos(ang));
+}
+vec3 deform(vec2 uv){
+  vec3 p=vec3((uv-0.5)*uSheet, wrinkle(uv)*uWrinkle);
+  for(int i=0;i<${MAXF};i++){
+    if(i>=uFoldN) break;
+    p=bendFold(p,uFold[i].xy,uFold[i].z,uFold[i].w,uFoldW[i]);
+  }
+  return twistOp(p,uTwistAxis,uTwistK);
+}
+`;
+
+const COVERAGE = `
+uniform sampler2D uImg;
+uniform mat3 uSep;
+uniform float uInkN, uContrast, uExposure, uTrans, uSat, uGamma, uSharpen;
+vec3 coverage(vec2 uv, bool front){
+  vec2 iuv = front? uv : vec2(1.0-uv.x, uv.y);
+  vec2 tuv=vec2(iuv.x,1.0-iuv.y);
+  vec3 img=texture(uImg,tuv).rgb;
+  // unsharp mask against a coarser mip
+  img+=(img-textureLod(uImg,tuv,2.5).rgb)*uSharpen*2.5;
+  float luma=dot(img,vec3(0.2126,0.7152,0.0722));
+  img=mix(vec3(luma),img,uSat*2.0);
+  img=pow(clamp(img,0.0,1.0),vec3(1.0/uGamma));
+  img=clamp((img-0.5)*(0.72+uContrast*1.85)+0.5+(uExposure-0.5)*0.55,0.002,1.0);
+  vec3 cov=clamp(uSep*log(max(img,vec3(0.02))),0.0,1.38);
+  if(uInkN<2.5) cov.z=0.0;
+  if(uInkN<1.5) cov.y=0.0;
+  if(!front) cov*=0.18+uTrans*0.55;
+  return cov;
+}`;
+
+const VS_SCENE = `#version 300 es
+precision highp float;
+in vec2 aUv;
+uniform mat4 uMVP, uModel, uLightMVP;
+out vec2 vUv; out vec3 vN, vWP; out vec4 vLP;
+${DEFORM}
+void main(){
+  vec3 p=deform(aUv);
+  float e=0.004;
+  vec3 pu=deform(aUv+vec2(e,0.0)), pv=deform(aUv+vec2(0.0,e));
+  vec3 n=normalize(cross(pu-p,pv-p));
+  vUv=aUv;
+  vWP=(uModel*vec4(p,1.0)).xyz;
+  vN=mat3(uModel)*n;
+  vLP=uLightMVP*vec4(p,1.0);
+  gl_Position=uMVP*vec4(p,1.0);
+}`;
+
+const EDGE_TEST = `
+uniform float uEdgeRough;
+bool torn(vec2 uv){
+  float d=min(min(uv.x,1.0-uv.x),min(uv.y,1.0-uv.y));
+  float n=fbm(uv*vec2(26.0,24.0))*0.85+vnoise(uv*vec2(150.0,140.0))*0.22;
+  return d < 0.0010+n*0.0030*uEdgeRough;
+}`;
+
+const FS_SCENE = `#version 300 es
+precision highp float;
+in vec2 vUv; in vec3 vN, vWP; in vec4 vLP;
+layout(location=0) out vec4 oA;
+layout(location=1) out vec4 oB;
+uniform sampler2D uShadow;
+uniform vec3 uLight, uCam;
+uniform float uShadowS, uThick, uShadowTexel;
+${COVERAGE}
+${NOISE}
+${EDGE_TEST}
+float shadowAt(vec3 wp, vec3 N){
+  vec3 pc=vLP.xyz/vLP.w*0.5+0.5;
+  if(pc.z>1.0||min(pc.x,pc.y)<0.0||max(pc.x,pc.y)>1.0) return 1.0;
+  float s=0.0;
+  for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){
+    float dz=texture(uShadow,pc.xy+vec2(float(x),float(y))*uShadowTexel).r;
+    s+=(pc.z-0.0042>dz)?0.0:1.0;
+  }
+  return s/9.0;
+}
+void main(){
+  if(torn(vUv)) discard;
+  vec3 N=normalize(vN);
+  bool front=gl_FrontFacing;
+  if(!front) N=-N;
+
+  vec3 cov=coverage(vUv,front);
+
+  float ndl=dot(N,uLight);
+  float sh=mix(1.0,shadowAt(vWP,N),uShadowS);
+  float diff=pow(clamp(ndl*0.55+0.45,0.0,1.0),1.25);
+  float trans=uTrans*pow(clamp(-ndl,0.0,1.0),1.6)*0.6;
+  float shade=0.40+0.66*diff*sh+trans;
+  float fres=1.0-abs(dot(N,normalize(uCam-vWP)));
+  shade*=1.0-uThick*0.55*pow(fres,7.0);   // paper edge darkens at the silhouette
+
+  oA=vec4(cov/1.4, clamp(shade/1.75,0.0,1.0));
+  oB=vec4(1.0, front?1.0:0.0, clamp(gl_FragCoord.z,0.0,1.0), 1.0);
+}`;
+
+const VS_SHADOW = `#version 300 es
+precision highp float;
+in vec2 aUv;
+uniform mat4 uLightMVP;
+out vec2 vUv;
+${DEFORM}
+void main(){ vUv=aUv; gl_Position=uLightMVP*vec4(deform(aUv),1.0); }`;
+
+const FS_SHADOW = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 o;
+${NOISE}
+${EDGE_TEST}
+void main(){ if(torn(vUv)) discard; o=vec4(1.0); }`;
+
+const FS_LAYERS = `#version 300 es
+precision highp float;
+in vec2 vUv; in vec3 vN,vWP; in vec4 vLP; out vec4 o;
+${COVERAGE}
+${NOISE}
+${EDGE_TEST}
+void main(){
+  if(torn(vUv)) discard;
+  o=vec4(coverage(vUv,gl_FrontFacing)*0.22, 0.125);  // summed ink of every ply
+}`;
+
+const VS_QUAD = `#version 300 es
+precision highp float;
+in vec2 aUv; out vec2 vUv;
+void main(){ vUv=aUv; gl_Position=vec4(aUv*2.0-1.0,0.0,1.0); }`;
+
+/* Ink is deposited, not overlaid: paper colour is multiplied by each ink's
+   transmittance after that ink has been screened, mottled and mis-registered. */
+const FS_POST = `#version 300 es
+precision highp float;
+in vec2 vUv; out vec4 frag;
+uniform sampler2D uA,uB,uLayers;
+uniform vec2 uRes, uSrcTexel, uRegOff[3];
+uniform vec3 uInk[3], uPaperCol, uBackCol;
+uniform float uInkN,uHalf,uGrain,uBleed,uReg,uTrans,uShadowS,uPrint,uSeed;
+uniform float uSunAmt,uSunScale,uSunSoft,uSunTime,uMaskOut;
+${NOISE}
+vec4 sA(vec2 uv){vec2 o=uSrcTexel*0.5;
+  return 0.25*(texture(uA,uv+o)+texture(uA,uv-o)+texture(uA,uv+vec2(o.x,-o.y))+texture(uA,uv+vec2(-o.x,o.y)));}
+vec4 sB(vec2 uv){vec2 o=uSrcTexel*0.5;
+  return 0.25*(texture(uB,uv+o)+texture(uB,uv-o)+texture(uB,uv+vec2(o.x,-o.y))+texture(uB,uv+vec2(-o.x,o.y)));}
+float chan(vec4 v,int i){return i==0?v.x:(i==1?v.y:v.z);}
+float chan(vec3 v,int i){return i==0?v.x:(i==1?v.y:v.z);}
+
+/* Dappled sunlight. A slowly warping noise field is cut into leaf gaps, then
+   convolved with a disc the width of the sun's penumbra — that blur is what
+   rounds every gap into the soft overlapping blobs light makes on a wall. */
+float canopyN(vec2 p){
+  return vnoise(p)*0.63+vnoise(p*2.11+vec2(0.0,uSunTime*0.07))*0.37;
+}
+float dapple(vec2 uv){
+  vec2 p=uv*vec2(uRes.x/uRes.y,1.0)*uSunScale;
+  p+=vec2(uSunTime*0.075,uSunTime*0.026);                       // the canopy drifts
+  p+=(vec2(vnoise(p*0.37+uSunTime*0.06),
+           vnoise(p*0.41+17.3-uSunTime*0.05))-0.5)*1.7;         // and the branches sway
+  float r=0.045+uSunSoft*0.30, s=0.0;
+  for(int k=0;k<12;k++){
+    float a=float(k)*2.399963;                                  // golden angle = even disc
+    float rr=sqrt((float(k)+0.5)/12.0)*r;
+    s+=smoothstep(0.45,0.61,canopyN(p+vec2(cos(a),sin(a))*rr));
+  }
+  return s/12.0;
+}
+
+void main(){
+  vec2 px=gl_FragCoord.xy;
+  vec2 spx=floor(px/uPrint);                     // screen pixel, so per-pixel noise keeps its size in exports
+  // scanner platen wobble — the whole plate drifts a hair
+  vec2 uv=vUv+(vec2(vnoise(vUv*2.3+uSeed),vnoise(vUv*2.1+uSeed+9.0))-0.5)*0.0035;
+
+  vec4 B=sB(uv);
+  float mask=B.x;
+  vec4 A0=sA(uv);
+  float shade=A0.w*1.75;
+  vec4 LY=texture(uLayers,uv);
+  float lay=LY.a*8.0;
+  float vr=(1.2+uTrans*9.5)*uPrint/uRes.y;              // scatter radius through one ply
+  vec2 vas=vec2(uRes.y/uRes.x,1.0);
+  vec3 allInk=LY.rgb*0.28;
+  for(int k=0;k<4;k++){
+    float a=float(k)*1.5708;
+    allInk+=texture(uLayers,uv+vec2(cos(a),sin(a))*vr*vas).rgb*0.10;
+    float b=a+0.785;
+    allInk+=texture(uLayers,uv+vec2(cos(b),sin(b))*vr*2.1*vas).rgb*0.08;
+  }
+  allInk/=0.22;                    // ink summed over every ply, diffused
+
+  float angs[3]=float[3](0.262,1.309,0.785);
+  vec3 col=uPaperCol*(0.968+0.052*fbm(px/(1.7*uPrint)))*(0.985+0.03*fbm(vUv*vec2(90.0,84.0)));
+
+  for(int i=0;i<3;i++){
+    if(float(i)>=uInkN) break;
+    vec2 ruv=uv+uRegOff[i]*uReg*4.5*uPrint/uRes;
+    // ink wicking along paper fibre
+    ruv+=(vec2(vnoise(ruv*vec2(430.0,410.0)+float(i)*13.0),vnoise(ruv*vec2(405.0,437.0)+37.0))-0.5)
+         *uBleed*2.6*uPrint/uRes;
+    float cov=chan(sA(ruv),i)*1.4;
+    // ink on the plies underneath, diffused by the fibre it has to travel through
+    float behind=max(chan(allInk,i)-cov,0.0);
+    cov+=behind*uTrans*0.34*step(1.5,lay);
+    if(uBleed>0.01){
+      float r=uBleed*2.4*uPrint, bl=0.0;
+      for(int k=0;k<6;k++){
+        float a=float(k)*1.047+float(i);
+        bl+=chan(sA(ruv+vec2(cos(a),sin(a))*r/uRes),i);
+      }
+      cov=mix(cov,max(cov,bl/6.0*1.4*0.94),uBleed*0.9);
+    }
+    cov*=0.74+0.52*fbm(ruv*vec2(3.2,2.9)+float(i)*9.1);          // uneven roller ink
+    cov*=0.90+0.20*fbm(ruv*vec2(14.0,13.0)+float(i)*4.3);
+    cov*=1.0+0.032*sin(ruv.y*34.0+fbm(ruv*2.2)*11.0);            // drum streaks
+    cov*=1.0+uShadowS*(1.0-shade)*1.35;                          // shading prints as more ink
+    if(i==0) cov+=uShadowS*pow(clamp(1.0-shade,0.0,1.0),1.35)*0.95;
+    cov*=mix(1.0,pow(1.13,max(lay-1.0,0.0)),0.85);               // overlaps saturate
+    cov*=1.0-uGrain*0.24*fbm(px/(2.3*uPrint));
+    cov-=uGrain*0.17*hash21(spx*1.7+float(i)*31.0+uSeed);
+    cov=max(cov-0.045,0.0);                                      // highlights drop out
+
+    float sz=uHalf*uPrint;
+    float htMix=smoothstep(0.85,2.1,uHalf)*(1.0-smoothstep(0.80,1.02,cov));
+    if(htMix>0.002){
+      vec2 q=rot(angs[i])*px/max(sz,0.6);
+      vec2 f=fract(q)-0.5;
+      float d=length(f)*2.0;
+      float r=sqrt(clamp(cov,0.0,1.0))*1.06;
+      float ht=smoothstep(r+0.42,r-0.42,d);
+      cov=mix(cov,max(ht,clamp(cov-1.0,0.0,1.0)),htMix);
+    }
+    vec3 ink=i==0?uInk[0]:(i==1?uInk[1]:uInk[2]);
+    col*=mix(vec3(1.0),ink,clamp(cov,0.0,1.0));
+  }
+
+  float ps=clamp(shade,0.0,1.6);
+  col*=0.88+0.15*ps;                                    // paper stays paper in shadow
+  col*=mix(vec3(1.0),mix(vec3(1.0),uInk[0],0.75),(1.0-clamp(ps,0.0,1.0))*0.55);
+  vec3 stackT=mix(vec3(0.945),0.52+0.48*uInk[0],0.6);   // transmittance of one extra ply
+  col*=pow(stackT,vec3(max(lay-1.0,0.0)*(0.18+uTrans*1.05)));
+
+  // flat backdrop - no cast shadow behind the sheet
+  vec3 bg=uBackCol;
+  col=mix(col,bg,uTrans*mix(0.16,0.05,clamp(lay-1.0,0.0,1.0))*mask);
+  col=mix(bg,col,mask);
+
+  if(uSunAmt>0.002){
+    float lit=dapple(vUv);
+    float k=uSunAmt*mask;                                             // light lands on the sheet only
+    col*=mix(vec3(1.0),mix(vec3(0.50,0.53,0.60),vec3(1.11,1.085,1.025),lit),k);
+    col+=k*0.16*smoothstep(0.55,1.0,lit)*vec3(1.0,0.97,0.90);         // sun off the surface
+    col*=1.0+k*0.05*(fbm(px/(3.0*uPrint))-0.5);                       // dust in the beam
+  }
+
+  col+=(hash21(spx+uSeed)-0.5)*(0.022+uGrain*0.03)*mask;
+  vec2 d=vUv-0.5;
+  col*=1.0-dot(d,d)*0.13*mask;
+  frag=uMaskOut>0.5?vec4(vec3(mask),1.0):vec4(clamp(col,0.0,1.0),1.0);
+}`;
+
+/* ============================================================
+   GL ENGINE
+   ============================================================ */
+const cv = $('#gl');
+const gl = cv.getContext('webgl2',{antialias:false,preserveDrawingBuffer:true,alpha:false});
+if(!gl) fail('WebGL2 is required.');
+
+function fail(msg){ const e=$('#err'); e.style.display='block'; e.textContent=String(msg); }
+
+function sh(type,src){
+  const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){
+    const log=gl.getShaderInfoLog(s);
+    const line=(/ERROR: \d+:(\d+)/.exec(log)||[])[1];
+    fail(log+'\n\n'+src.split('\n').slice(Math.max(0,line-4),+line+3).map((l,i)=>(+line-3+i)+' | '+l).join('\n'));
+    throw new Error(log);
+  }
+  return s;
+}
+function prog(vs,fs){
+  const p=gl.createProgram();
+  gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));
+  gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));
+  gl.bindAttribLocation(p,0,'aUv');
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)){fail(gl.getProgramInfoLog(p));throw new Error('link')}
+  p._u={};
+  p.u=n=>{ if(!(n in p._u)) p._u[n]=gl.getUniformLocation(p,n); return p._u[n]; };
+  return p;
+}
+
+const pScene = prog(VS_SCENE,FS_SCENE);
+const pShadow= prog(VS_SHADOW,FS_SHADOW);
+const pLayers= prog(VS_SCENE,FS_LAYERS);
+const pPost  = prog(VS_QUAD,FS_POST);
+
+/* mesh */
+const GRID=272;
+const meshVAO=gl.createVertexArray();
+let meshCount=0;
+(function(){
+  const n=GRID+1, uvs=new Float32Array(n*n*2);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){uvs[(y*n+x)*2]=x/GRID;uvs[(y*n+x)*2+1]=y/GRID}
+  const idx=new Uint32Array(GRID*GRID*6);
+  let k=0;
+  for(let y=0;y<GRID;y++)for(let x=0;x<GRID;x++){
+    const a=y*n+x,b=a+1,c=a+n,d=c+1;
+    idx[k++]=a;idx[k++]=b;idx[k++]=c;idx[k++]=b;idx[k++]=d;idx[k++]=c;
+  }
+  meshCount=k;
+  gl.bindVertexArray(meshVAO);
+  const vb=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,uvs,gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  const ib=gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,idx,gl.STATIC_DRAW);
+  gl.bindVertexArray(null);
+})();
+
+const quadVAO=gl.createVertexArray();
+(function(){
+  gl.bindVertexArray(quadVAO);
+  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null);
+})();
+
+function tex(w,h,internal,format,type,filter){
+  const t=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.texImage2D(gl.TEXTURE_2D,0,internal,w,h,0,format,type,null);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,filter);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,filter);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  return t;
+}
+const SHADOW_SIZE=1400;
+let FB={};
+function allocTargets(w,h,sw,sh_){
+  for(const k in FB.del||{}) {}
+  if(FB.scene){gl.deleteFramebuffer(FB.scene);gl.deleteFramebuffer(FB.layers);
+    gl.deleteTexture(FB.tA);gl.deleteTexture(FB.tB);gl.deleteTexture(FB.tL);gl.deleteRenderbuffer(FB.rb);}
+  FB.w=sw;FB.h=sh_;
+  FB.tA=tex(sw,sh_,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,gl.LINEAR);
+  FB.tB=tex(sw,sh_,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,gl.LINEAR);
+  FB.rb=gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER,FB.rb);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT24,sw,sh_);
+  FB.scene=gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER,FB.scene);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,FB.tA,0);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT1,gl.TEXTURE_2D,FB.tB,0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,FB.rb);
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
+  FB.lw=Math.max(2,sw>>1);FB.lh=Math.max(2,sh_>>1);
+  FB.tL=tex(FB.lw,FB.lh,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,gl.LINEAR);
+  FB.layers=gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER,FB.layers);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,FB.tL,0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+}
+(function(){ // shadow target (allocated once)
+  FB.sd=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D,FB.sd);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.DEPTH_COMPONENT24,SHADOW_SIZE,SHADOW_SIZE,0,gl.DEPTH_COMPONENT,gl.UNSIGNED_INT,null);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  FB.sc=tex(SHADOW_SIZE,SHADOW_SIZE,gl.R8,gl.RED,gl.UNSIGNED_BYTE,gl.NEAREST);
+  FB.shadow=gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER,FB.shadow);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,FB.sc,0);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.TEXTURE_2D,FB.sd,0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+})();
+
+/* source image texture */
+let imgTex=gl.createTexture(), sepMat=null;
+function uploadImage(src){
+  gl.bindTexture(gl.TEXTURE_2D,imgTex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  fitSheet((src.width||src.naturalWidth)/(src.height||src.naturalHeight));
+  buildComposition(); requestRender();
+}
+
+/* ---- CPU mirror of the vertex deform, used to frame the camera ---- */
+function deformJS(u,v){
+  let x=(u-0.5)*SHEET.w, y=(v-0.5)*SHEET.h, z=0;
+  const f=COMP.live4||COMP.fold4, W=COMP.foldW;
+  for(let i=0;i<COMP.n;i++){
+    const nx=f[i*4],ny=f[i*4+1],c=f[i*4+2],th=f[i*4+3],w=W[i];
+    const dx=x*nx+y*ny-c;
+    if(dx<=0) continue;
+    const ax=ny, ay=-nx;
+    const zz=x*ax+y*ay, yy=z;
+    let X,Y,phi;
+    if(Math.abs(th)<1e-4){X=dx;Y=0;phi=0}
+    else{
+      const xc=Math.min(dx,w); phi=th*xc/w; const R=w/th;
+      X=R*Math.sin(phi); Y=R*(1-Math.cos(phi));
+      if(dx>w){X+=(dx-w)*Math.cos(th);Y+=(dx-w)*Math.sin(th)}
+    }
+    const yp=yy+(0.0022+P.thick*0.013)*Math.abs(phi);
+    X+=-yp*Math.sin(phi); Y+=yp*Math.cos(phi);
+    const cx=(c+X);
+    x=cx*nx+zz*ax; y=cx*ny+zz*ay; z=Y;
+  }
+  const k=COMP.liveTwist!==undefined?COMP.liveTwist:COMP.twistK;
+  if(Math.abs(k)>1e-4){
+    const tx=COMP.twistAxis[0],ty=COMP.twistAxis[1];
+    const a=k*Math.tanh((x*tx+y*ty)*3.2), C=Math.cos(a), S=Math.sin(a), d=tx*x+ty*y;
+    const crx=ty*z-0*y, cry=0*x-tx*z, crz=tx*y-ty*x;
+    return [x*C+crx*S+tx*d*(1-C), y*C+cry*S+ty*d*(1-C), z*C+crz*S];
+  }
+  return [x,y,z];
+}
+function frameCamera(M,fov,asp){
+  const tanH=Math.tan(fov/2);
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9,pts=[];
+  const N=17;
+  for(let j=0;j<=N;j++)for(let i=0;i<=N;i++){
+    const p=deformJS(i/N,j/N);
+    const x=M[0]*p[0]+M[4]*p[1]+M[8]*p[2]+M[12];
+    const y=M[1]*p[0]+M[5]*p[1]+M[9]*p[2]+M[13];
+    const z=M[2]*p[0]+M[6]*p[1]+M[10]*p[2]+M[14];
+    pts.push([x,y,z]);
+    if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
+  }
+  const cx=(minx+maxx)/2, cy=(miny+maxy)/2;
+  let d=0;
+  for(const q of pts){
+    d=Math.max(d, q[2]+Math.abs(q[0]-cx)/(tanH*asp), q[2]+Math.abs(q[1]-cy)/tanH);
+  }
+  return {cx,cy,dist:d*1.0+Math.max(SHEET.w,SHEET.h)*0.10};
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const LIGHT=(()=>{const v=[-0.42,0.66,0.62];const l=Math.hypot(...v);return v.map(x=>x/l)})();
+let CW=0,CH=0,SS=1,printScale=1,maskOut=0,dirty=true;
+
+function resize(force){
+  const r=cv.getBoundingClientRect();
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  let w=Math.max(2,Math.round(r.width*dpr)), h=Math.max(2,Math.round(r.height*dpr));
+  const cap=1900; if(w>cap){h=Math.round(h*cap/w);w=cap}
+  if(!force && w===CW && h===CH) return;
+  CW=w;CH=h;cv.width=w;cv.height=h;
+  SS=clamp(2500/w,1.0,1.5);
+  allocTargets(w,h,Math.round(w*SS),Math.round(h*SS));
+  dirty=true;
+}
+function requestRender(){ dirty=true; }
+
+const hitPx=new Uint8Array(4);
+function overSheet(cx,cy){
+  if(!FB.scene) return false;
+  const r=cv.getBoundingClientRect();
+  const x=Math.round((cx-r.left)/r.width*FB.w), y=Math.round((1-(cy-r.top)/r.height)*FB.h);
+  if(x<0||y<0||x>=FB.w||y>=FB.h) return false;
+  try{
+  gl.bindFramebuffer(gl.FRAMEBUFFER,FB.scene);
+  gl.readBuffer(gl.COLOR_ATTACHMENT1);
+  gl.readPixels(x,y,1,1,gl.RGBA,gl.UNSIGNED_BYTE,hitPx);
+  gl.readBuffer(gl.COLOR_ATTACHMENT0);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  }catch(e){ return false; }
+  return hitPx[0]>110;
+}
+
+/* Hovering relaxes the sheet: the last folds made are the first to spring open,
+   and a crease never fully disappears. */
+let uncoil=0, uncoilTo=0, lastT=performance.now(), sunT=0;
+function applyUncoil(){
+  if(!COMP.live4||COMP.live4.length!==COMP.fold4.length) COMP.live4=new Float32Array(COMP.fold4.length);
+  COMP.live4.set(COMP.fold4);
+  const n=COMP.n, u=uncoil;
+  if(u>0.0005){
+    for(let i=0;i<n;i++){
+      let ui=clamp(u*(1+(n-1)*0.34)-(n-1-i)*0.34,0,1);
+      ui=ui*ui*(3-2*ui);
+      COMP.live4[i*4+3]=COMP.fold4[i*4+3]*(1-0.94*ui);
+    }
+  }
+  COMP.liveTwist=COMP.twistK*(1-0.94*u);
+  COMP.liveWrinkle=COMP.wrinkle*(1-0.4*u);
+}
+function setDeformUniforms(p){
+  gl.uniform4fv(p.u('uFold'),COMP.live4||COMP.fold4);
+  gl.uniform1fv(p.u('uFoldW'),COMP.foldW);
+  gl.uniform1i(p.u('uFoldN'),COMP.n);
+  gl.uniform2f(p.u('uSheet'),SHEET.w,SHEET.h);
+  gl.uniform2f(p.u('uTwistAxis'),COMP.twistAxis[0],COMP.twistAxis[1]);
+  gl.uniform1f(p.u('uTwistK'),COMP.liveTwist!==undefined?COMP.liveTwist:COMP.twistK);
+  gl.uniform1f(p.u('uWrinkle'),COMP.liveWrinkle!==undefined?COMP.liveWrinkle:COMP.wrinkle);
+  gl.uniform1f(p.u('uWrinkScale'),COMP.wrinkleScale);
+  gl.uniform2f(p.u('uSeed2'),COMP.seed2[0],COMP.seed2[1]);
+  gl.uniform1f(p.u('uEdgeRough'),COMP.edgeRough);
+  gl.uniform1f(p.u('uPly'),0.0022+P.thick*0.013);
+}
+
+function render(){
+  if(!COMP) buildComposition();
+  if(!COMP.live4) applyUncoil();
+  const asp=CW/CH;
+  let M=m4mul(m4rotZ(P.axisSpin*D2R),m4mul(m4rotX(P.axisX*D2R),m4rotY(P.axisY*D2R)));
+  const fov=26*D2R;
+  const fr=frameCamera(M,fov,asp);
+  const dist=fr.dist/P.zoom*1.22;
+  M=m4mul(m4trans(-fr.cx+COMP.offset[0]*dist*0.12,-fr.cy+COMP.offset[1]*dist*0.12,0),M);
+  const proj=m4persp(fov,asp,0.05,60);
+  const view=m4trans(0,0,-dist);
+  const MVP=m4mul(proj,m4mul(view,M));
+  const lightView=m4look([LIGHT[0]*4,LIGHT[1]*4,LIGHT[2]*4],[0,0,0],[0,0,1]);
+  const lightMVP=m4mul(m4mul(m4ortho(-1.5,1.5,-1.5,1.5,0.1,9),lightView),M);
+
+  gl.bindVertexArray(meshVAO);
+  gl.disable(gl.CULL_FACE);
+
+  /* --- shadow --- */
+  gl.bindFramebuffer(gl.FRAMEBUFFER,FB.shadow);
+  gl.viewport(0,0,SHADOW_SIZE,SHADOW_SIZE);
+  gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.BLEND);
+  gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.useProgram(pShadow);
+  setDeformUniforms(pShadow);
+  gl.uniformMatrix4fv(pShadow.u('uLightMVP'),false,lightMVP);
+  gl.drawElements(gl.TRIANGLES,meshCount,gl.UNSIGNED_INT,0);
+
+  /* --- scene --- */
+  gl.bindFramebuffer(gl.FRAMEBUFFER,FB.scene);
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
+  gl.viewport(0,0,FB.w,FB.h);
+  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.useProgram(pScene);
+  setDeformUniforms(pScene);
+  gl.uniformMatrix4fv(pScene.u('uMVP'),false,MVP);
+  gl.uniformMatrix4fv(pScene.u('uModel'),false,M);
+  gl.uniformMatrix4fv(pScene.u('uLightMVP'),false,lightMVP);
+  gl.uniformMatrix3fv(pScene.u('uSep'),false,sepMat);
+  gl.uniform3fv(pScene.u('uLight'),LIGHT);
+  gl.uniform3f(pScene.u('uCam'),0,0,dist);
+  gl.uniform1f(pScene.u('uInkN'),P.inkN);
+  gl.uniform1f(pScene.u('uContrast'),P.contrast);
+  gl.uniform1f(pScene.u('uExposure'),P.exposure);
+  gl.uniform1f(pScene.u('uSat'),P.sat);
+  gl.uniform1f(pScene.u('uGamma'),P.gamma);
+  gl.uniform1f(pScene.u('uSharpen'),P.sharpen);
+  gl.uniform1f(pScene.u('uTrans'),P.translu);
+  gl.uniform1f(pScene.u('uShadowS'),P.shadow);
+  gl.uniform1f(pScene.u('uThick'),P.thick);
+  gl.uniform1f(pScene.u('uShadowTexel'),1/SHADOW_SIZE);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,imgTex);
+  gl.uniform1i(pScene.u('uImg'),0);
+  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,FB.sd);
+  gl.uniform1i(pScene.u('uShadow'),1);
+  gl.drawElements(gl.TRIANGLES,meshCount,gl.UNSIGNED_INT,0);
+
+  /* --- layer count (paper stacked over paper) --- */
+  gl.bindFramebuffer(gl.FRAMEBUFFER,FB.layers);
+  gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+  gl.viewport(0,0,FB.lw,FB.lh);
+  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.disable(gl.DEPTH_TEST);gl.depthMask(false);
+  gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);
+  gl.useProgram(pLayers);
+  setDeformUniforms(pLayers);
+  gl.uniformMatrix3fv(pLayers.u('uSep'),false,sepMat);
+  gl.uniform1f(pLayers.u('uInkN'),P.inkN);
+  gl.uniform1f(pLayers.u('uContrast'),P.contrast);
+  gl.uniform1f(pLayers.u('uExposure'),P.exposure);
+  gl.uniform1f(pLayers.u('uSat'),P.sat);
+  gl.uniform1f(pLayers.u('uGamma'),P.gamma);
+  gl.uniform1f(pLayers.u('uSharpen'),P.sharpen);
+  gl.uniform1f(pLayers.u('uTrans'),P.translu);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,imgTex);
+  gl.uniform1i(pLayers.u('uImg'),0);
+  gl.uniformMatrix4fv(pLayers.u('uMVP'),false,MVP);
+  gl.uniformMatrix4fv(pLayers.u('uModel'),false,M);
+  gl.uniformMatrix4fv(pLayers.u('uLightMVP'),false,lightMVP);
+  gl.drawElements(gl.TRIANGLES,meshCount,gl.UNSIGNED_INT,0);
+  gl.disable(gl.BLEND);gl.depthMask(true);
+
+  renderPost();
+  updateGizmo(M);
+}
+
+/* The print pass reads only the three scene targets, so an animation that
+   lives purely in it (sunlight) can redraw without re-deforming the mesh. */
+function renderPost(){
+  if(!COMP) return;
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,CW,CH);
+  gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);
+  gl.useProgram(pPost);
+  gl.bindVertexArray(quadVAO);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,FB.tA);gl.uniform1i(pPost.u('uA'),0);
+  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,FB.tB);gl.uniform1i(pPost.u('uB'),1);
+  gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,FB.tL);gl.uniform1i(pPost.u('uLayers'),2);
+  gl.uniform2f(pPost.u('uRes'),CW,CH);
+  gl.uniform2f(pPost.u('uSrcTexel'),1/FB.w,1/FB.h);
+  gl.uniform2fv(pPost.u('uRegOff'),new Float32Array([].concat(...COMP.regOff)));
+  const inks=new Float32Array([].concat(...P.inks.map(hex2rgb)));
+  gl.uniform3fv(pPost.u('uInk'),inks);
+  const pt=P.paper, bd=P.backdrop;
+  gl.uniform3f(pPost.u('uPaperCol'),0.94+pt*0.055,0.932+pt*0.052,0.905+pt*0.062);
+  gl.uniform3f(pPost.u('uBackCol'),0.78+bd*0.31,0.775+bd*0.309,0.767+bd*0.309);
+  gl.uniform1f(pPost.u('uInkN'),P.inkN);
+  gl.uniform1f(pPost.u('uHalf'),P.halftone);
+  gl.uniform1f(pPost.u('uGrain'),P.grain);
+  gl.uniform1f(pPost.u('uBleed'),P.bleed);
+  gl.uniform1f(pPost.u('uReg'),P.reg);
+  gl.uniform1f(pPost.u('uTrans'),P.translu);
+  gl.uniform1f(pPost.u('uShadowS'),P.shadow);
+  gl.uniform1f(pPost.u('uPrint'),printScale);
+  gl.uniform1f(pPost.u('uSeed'),(P.seed%1000)/97);
+  gl.uniform1f(pPost.u('uSunAmt'),P.sun?P.sunAmt:0);
+  gl.uniform1f(pPost.u('uSunScale'),3.0+(1.0-P.sunSize)*15.0);
+  gl.uniform1f(pPost.u('uSunSoft'),P.sunSoft);
+  gl.uniform1f(pPost.u('uSunTime'),sunT);
+  gl.uniform1f(pPost.u('uMaskOut'),maskOut);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  gl.bindVertexArray(null);
+}
+
+const GZ=(()=>{
+  const NS='http://www.w3.org/2000/svg', el=$('#gizmo');
+  const mk=(t,a)=>{const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);el.append(n);return n};
+  const plane=mk('polygon',{'stroke-width':1,'stroke-linejoin':'round'});
+  const parts=[0,1,2].map(()=>({line:mk('line',{'stroke-width':1.25,'stroke-linecap':'round'}),
+                                tip:mk('circle',{r:1.6}),
+                                lab:mk('text',{'text-anchor':'middle','dominant-baseline':'middle'})}));
+  const AX=[[1,0,0,'X'],[0,1,0,'Y'],[0,0,1,'Z']];
+  return {el,plane,parts,AX};
+})();
+function updateGizmo(M){
+  const C=56, R=30;
+  const px=(x,y,z)=>[C+(M[0]*x+M[4]*y+M[8]*z)*R, C-(M[1]*x+M[5]*y+M[9]*z)*R, M[2]*x+M[6]*y+M[10]*z];
+  const sw=SHEET.w/Math.max(SHEET.w,SHEET.h)*0.78, shh=SHEET.h/Math.max(SHEET.w,SHEET.h)*0.78;
+  const corners=[[-sw,-shh],[sw,-shh],[sw,shh],[-sw,shh]].map(c=>px(c[0],c[1],0));
+  GZ.plane.setAttribute('points',corners.map(c=>c[0].toFixed(1)+','+c[1].toFixed(1)).join(' '));
+  const face=(M[2]*0+M[6]*0+M[10]*1);
+  GZ.plane.setAttribute('fill', face>=0?'rgba(74,47,208,0.16)':'rgba(23,21,18,0.07)');
+  GZ.plane.setAttribute('stroke', face>=0?'#4a2fd0':'#8a857c');
+  GZ.AX.forEach((a,i)=>{
+    const q=px(a[0]*0.92,a[1]*0.92,a[2]*0.92), l=px(a[0]*1.14,a[1]*1.14,a[2]*1.14);
+    const o=(0.34+0.66*(q[2]*0.5+0.5)).toFixed(2);
+    const col=i===2?'#4a2fd0':'#171512';
+    const P_=GZ.parts[i];
+    P_.line.setAttribute('x1',C);P_.line.setAttribute('y1',C);
+    P_.line.setAttribute('x2',q[0].toFixed(1));P_.line.setAttribute('y2',q[1].toFixed(1));
+    P_.line.setAttribute('stroke',col);P_.line.setAttribute('opacity',o);
+    P_.tip.setAttribute('cx',q[0].toFixed(1));P_.tip.setAttribute('cy',q[1].toFixed(1));
+    P_.tip.setAttribute('fill',col);P_.tip.setAttribute('opacity',o);
+    P_.lab.setAttribute('x',l[0].toFixed(1));P_.lab.setAttribute('y',l[1].toFixed(1));
+    P_.lab.setAttribute('fill',col);P_.lab.setAttribute('opacity',o);
+    P_.lab.textContent=a[3];
+  });
+}
+function frame(){
+  resize(false);
+  const now=performance.now(), dt=Math.min(0.05,(now-lastT)/1000); lastT=now;
+  if(Math.abs(uncoil-uncoilTo)>0.0006){
+    uncoil+=(uncoilTo-uncoil)*(1-Math.exp(-(uncoilTo>uncoil?7.0:3.6)*dt));
+    applyUncoil(); dirty=true;
+  }else if(uncoil!==uncoilTo){ uncoil=uncoilTo; applyUncoil(); dirty=true; }
+  const sunMoving=P.sun&&P.sunSpeed>0.005;
+  if(sunMoving) sunT+=dt*(0.15+P.sunSpeed*2.4);
+  try{
+    if(dirty){ dirty=false; render(); }
+    else if(sunMoving){ renderPost(); }
+  }catch(e){ fail(e.stack||e); }
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const inputs={};
+function makeSlider(sec,[key,label,min,max,step,fmt]){
+  const row=document.createElement('div');row.className='row';
+  const lab=document.createElement('div');lab.className='lab';
+  const nm=document.createElement('span');nm.textContent=label;
+  const val=document.createElement('i');
+  const inp=document.createElement('input');
+  inp.type='range';inp.min=min;inp.max=max;inp.step=step;inp.value=P[key];
+  const show=()=>val.textContent=fmt?fmt(+inp.value):(+inp.value).toFixed(2).replace(/^0\./,'.');
+  const GEO=['curl','curlDir','folds','sharp','distort','random','thick'];
+  inp.addEventListener('input',()=>{
+    P[key]=+inp.value;show();
+    if(GEO.includes(key)) buildComposition();
+    requestRender();
+  });
+  show();
+  lab.append(nm,val);row.append(lab,inp);sec.append(row);
+  inputs[key]={inp,show};
+}
+for(const id in SLIDERS){const sec=$('#'+id);SLIDERS[id].forEach(s=>makeSlider(sec,s))}
+
+const modesEl=$('#modes');
+MODES.forEach(([id,label])=>{
+  const b=document.createElement('button');
+  b.className='mode';b.textContent=label;b.dataset.m=id;
+  if(OFF_MODES.has(id)){ b.disabled=true; b.title='coming soon'; }
+  else b.addEventListener('click',()=>{
+    P.mode=id;
+    if(id==='flat'){P.axisX=0;P.axisY=0;P.axisSpin=0;syncSliders()}  // flat faces the camera square-on
+    syncModes();buildComposition();requestRender()});
+  modesEl.append(b);
+});
+function syncModes(){[...modesEl.children].forEach(b=>b.dataset.on=b.dataset.m===P.mode?'1':'0')}
+
+const inkSeg=$('#inkSeg');
+[1,2,3].forEach(n=>{
+  const b=document.createElement('button');
+  b.textContent=n+(n===1?' ink':' inks');
+  b.addEventListener('click',()=>{P.inkN=n;syncInk();requestRender()});
+  inkSeg.append(b);
+});
+const sunSeg=$('#sunSeg');
+['Off','Sunlight'].forEach((t,i)=>{
+  const b=document.createElement('button');
+  b.textContent=t;
+  b.addEventListener('click',()=>{P.sun=i;syncSun();requestRender()});
+  sunSeg.append(b);
+});
+const mqNarrow = matchMedia('(max-width:760px)');
+function placeSun(){
+  const sun=$('#secSun');
+  if(mqNarrow.matches){ if(sun.parentElement!==$('#scroll')) $('#scroll').append(sun); }
+  else if(sun.parentElement!==$('#stage')) $('#stage').insertBefore(sun,$('#drop'));
+}
+mqNarrow.addEventListener('change',placeSun);
+
+function syncSun(){
+  [...sunSeg.children].forEach((b,i)=>b.dataset.on=(i===(P.sun?1:0))?'1':'0');
+  $('#secSun').dataset.off=P.sun?'0':'1';
+}
+
+let activeInk=0;
+const inksEl=$('#inks');
+for(let i=0;i<3;i++){
+  const d=document.createElement('div');d.className='ink';
+  const c=document.createElement('input');c.type='color';c.value=P.inks[i];
+  c.addEventListener('focus',()=>{activeInk=i});
+  c.addEventListener('input',()=>{P.inks[i]=c.value;syncInk();requestRender()});
+  d.append(c);inksEl.append(d);
+}
+const swEl=$('#swatches');
+RISO.forEach(h=>{
+  const b=document.createElement('button');b.className='sw';b.style.background=h;b.title=h;
+  b.addEventListener('click',()=>{P.inks[activeInk]=h;syncInk();requestRender()});
+  swEl.append(b);
+});
+function syncInk(){
+  [...inkSeg.children].forEach((b,i)=>b.dataset.on=(i+1===P.inkN)?'1':'0');
+  [...inksEl.children].forEach((d,i)=>{d.dataset.off=i<P.inkN?'0':'1';d.firstChild.value=P.inks[i];
+    d.style.outline=(i===activeInk&&i<P.inkN)?'1px solid var(--ink)':'none';d.style.outlineOffset='1px';});
+  sepMat=separationMatrix(P.inks,P.inkN);
+}
+
+function syncSliders(){for(const k in inputs){inputs[k].inp.value=P[k];inputs[k].show()}}
+const IMAGE_DEFAULTS={exposure:0.5,contrast:0.52,sat:0.5,gamma:1,sharpen:0};
+$('#imgReset').addEventListener('click',()=>{Object.assign(P,IMAGE_DEFAULTS);syncSliders();requestRender()});
+
+/* ---------- randomize ---------- */
+function randomize(){
+  const r=Math.random;
+  P.seed=(r()*1e6)|0;
+  const rnd=mulberry32(P.seed);
+  const pick=a=>a[(rnd()*a.length)|0];
+  P.mode=pick(LIVE_MODES);
+  P.curl=0.25+rnd()*0.7;
+  P.curlDir=rnd()*360;
+  P.folds=1+((rnd()*7)|0);
+  P.sharp=0.35+rnd()*0.65;
+  P.distort=0.12+rnd()*0.6;
+  P.random=0.25+rnd()*0.7;
+  P.thick=0.15+rnd()*0.55;
+  P.translu=0.2+rnd()*0.6;
+  const swing=18+52*P.distort;
+  P.axisX=0;                             // tilt stays level; drag it if you want otherwise
+  P.axisY=(rnd()*2-1)*swing;
+  P.axisSpin=(rnd()*2-1)*40*P.random;
+  if(rnd()<0.45){
+    P.inkN=rnd()<0.55?1:(rnd()<0.75?2:3);
+    const shuf=RISO.slice().sort(()=>rnd()-0.5);
+    for(let i=0;i<3;i++)P.inks[i]=shuf[i];
+    if(rnd()<0.4)P.inks[0]='#6a5ae8';
+    syncInk();
+  }
+  syncModes();syncSliders();buildComposition();requestRender();
+}
+
+/* ---------- export ---------- */
+function exportPNG(scale){
+  const oldW=CW,oldH=CH;
+  printScale=scale;
+  CW=cv.width=oldW*scale;CH=cv.height=oldH*scale;
+  allocTargets(CW,CH,Math.round(CW*SS),Math.round(CH*SS));
+  render();
+  const shot=document.createElement('canvas');shot.width=CW;shot.height=CH;
+  shot.getContext('2d').drawImage(cv,0,0);
+  let out=shot;
+  if(P.mode==='flat') out=cutSheet(shot);   // flat exports the sheet alone, torn edges and all
+  printScale=1;CW=oldW;CH=oldH;cv.width=oldW;cv.height=oldH;
+  allocTargets(CW,CH,Math.round(CW*SS),Math.round(CH*SS));
+  requestRender();
+  out.toBlob(b=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='riso-paper-'+P.seed+'.png';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  },'image/png');
+}
+/* Redraws the print pass as the sheet mask, crops to it and makes the backdrop
+   transparent. Edge pixels were blended with the backdrop, so that is undone. */
+function cutSheet(shot){
+  maskOut=1;renderPost();maskOut=0;
+  const mc=document.createElement('canvas');mc.width=CW;mc.height=CH;
+  const mx=mc.getContext('2d');mx.drawImage(cv,0,0);
+  const M=mx.getImageData(0,0,CW,CH).data;
+  let x0=CW,y0=CH,x1=-1,y1=-1;
+  for(let y=0;y<CH;y++)for(let x=0;x<CW;x++) if(M[(y*CW+x)*4]>0){
+    if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+  }
+  if(x1<0) return shot;
+  const w=x1-x0+1,h=y1-y0+1;
+  const C=shot.getContext('2d').getImageData(x0,y0,w,h), c=C.data;
+  const bd=P.backdrop, bg=[0.78+bd*0.31,0.775+bd*0.309,0.767+bd*0.309].map(v=>Math.min(v,1)*255);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const i=(y*w+x)*4, m=M[((y+y0)*CW+x+x0)*4]/255;
+    if(m>0&&m<1) for(let k=0;k<3;k++) c[i+k]=(c[i+k]-bg[k]*(1-m))/m;
+    c[i+3]=m*255;
+  }
+  const out=document.createElement('canvas');out.width=w;out.height=h;
+  out.getContext('2d').putImageData(C,0,0);
+  return out;
+}
+
+/* ---------- events ---------- */
+$('#bRand').addEventListener('click',randomize);
+$('#bExport').addEventListener('click',()=>exportPNG(2));
+$('#bUpload').addEventListener('click',()=>$('#file').click());
+$('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFile(f)});
+
+function loadFile(f){
+  const img=new Image();
+  img.onload=()=>{uploadImage(img);URL.revokeObjectURL(img.src)};
+  img.src=URL.createObjectURL(f);
+}
+const stage=$('#stage'), dropEl=$('#drop');
+let dragDepth=0;
+['dragenter','dragover'].forEach(ev=>window.addEventListener(ev,e=>{
+  e.preventDefault();if(ev==='dragenter')dragDepth++;dropEl.classList.add('on')}));
+['dragleave','drop'].forEach(ev=>window.addEventListener(ev,e=>{
+  e.preventDefault();if(ev==='dragleave')dragDepth--;
+  if(dragDepth<=0||ev==='drop'){dragDepth=0;dropEl.classList.remove('on')}
+  if(ev==='drop'){const f=[...(e.dataTransfer.files||[])].find(f=>f.type.startsWith('image/'));if(f)loadFile(f)}
+}));
+window.addEventListener('paste',e=>{
+  for(const it of e.clipboardData.items) if(it.type.startsWith('image/')){loadFile(it.getAsFile());break}
+});
+window.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'&&e.target.type!=='range')return;
+  if(e.key==='Enter'||e.key==='r'||e.key==='R'){e.preventDefault();randomize()}
+  if(e.key==='a'||e.key==='A'){$('#gizmo').classList.toggle('off')}
+  if(e.key==='s'||e.key==='S'){P.sun=P.sun?0:1;syncSun();requestRender()}
+});
+
+/* A mouse uncoils the sheet by hovering it. A finger has no hover, so a tap
+   on the sheet toggles the same thing — and a tap off it coils back up.
+   Anything that travels far enough is a tilt drag, not a tap. */
+let drag=null, pinch=null;
+const pts=new Map();
+const TAP_SLOP=9;
+const spread=()=>{const[a,b]=[...pts.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
+
+cv.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse') uncoilTo=0; });
+cv.addEventListener('pointerdown',e=>{
+  pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  cv.setPointerCapture(e.pointerId);
+  if(pts.size===2){ drag=null; cv.classList.remove('drag'); pinch={d:spread()||1,z:P.zoom}; return; }
+  if(pts.size>2) return;
+  drag={x:e.clientX,y:e.clientY,rx:P.axisX,ry:P.axisY,far:0,touch:e.pointerType!=='mouse'};
+  cv.classList.add('drag');
+});
+cv.addEventListener('pointermove',e=>{
+  if(pts.has(e.pointerId)) pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pinch&&pts.size===2){
+    P.zoom=clamp(pinch.z*spread()/pinch.d,0.35,3.2); requestRender(); return;
+  }
+  if(!drag){ if(e.pointerType==='mouse') uncoilTo=overSheet(e.clientX,e.clientY)?1:0; return; }
+  drag.far=Math.max(drag.far,Math.hypot(e.clientX-drag.x,e.clientY-drag.y));
+  if(drag.touch&&drag.far<TAP_SLOP) return;          // still might turn out to be a tap
+  P.axisY=clamp(drag.ry+(e.clientX-drag.x)*0.30,-75,75);
+  P.axisX=clamp(drag.rx-(e.clientY-drag.y)*0.30,-75,75);
+  inputs.axisX.inp.value=P.axisX; inputs.axisX.show();
+  inputs.axisY.inp.value=P.axisY; inputs.axisY.show();
+  requestRender();
+});
+['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,e=>{
+  pts.delete(e.pointerId);
+  if(pts.size<2) pinch=null;
+  if(drag&&drag.touch&&drag.far<TAP_SLOP&&ev==='pointerup'){
+    uncoilTo=overSheet(e.clientX,e.clientY)?(uncoilTo?0:1):0;
+  }
+  if(pts.size===0){ drag=null; cv.classList.remove('drag'); }
+}));
+cv.addEventListener('dblclick',()=>{P.axisX=0;P.axisY=0;P.axisSpin=0;syncSliders();requestRender()});
+cv.addEventListener('wheel',e=>{e.preventDefault();P.zoom=clamp(P.zoom*Math.exp(-e.deltaY*0.0012),0.35,3.2);requestRender()},{passive:false});
+window.addEventListener('resize',()=>{resize(false);requestRender()});
+
+/* ---------- boot ---------- */
+try{
+  const q=new URLSearchParams(location.search);
+  for(const [k,v] of q) if(k in P) P[k]=(k==='mode')?v:parseFloat(v);
+  if(OFF_MODES.has(P.mode)) P.mode='flat';
+  if(P.mode==='flat') for(const k of ['axisX','axisY','axisSpin']) if(!q.has(k)) P[k]=0;
+  syncModes();syncInk();syncSun();syncSliders();placeSun();
+  resize(true);
+  uploadImage(defaultImage());
+  frame();
+}catch(err){ fail(err.stack||err); }
+</script>

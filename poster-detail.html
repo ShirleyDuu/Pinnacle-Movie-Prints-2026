@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="UTF-8">
+
+  <head>
+    <title>Poster Detail</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style-poster-detail.css">
+
+    <script defer src="js/movieData.js"></script>
+    <script defer src="js/detail.js"></script>
+    <script defer src="js/update-detail-icons.js"></script>
+    <script defer src="js/sorting-functions.js"></script>
+    <script defer src="js/click-back.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lettering.js/0.7.0/jquery.lettering.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/textillate/0.4.0/jquery.textillate.min.js"></script>
+
+    <script defer src="js/animate.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  
+  <body>
+
+    <header>
+      <a id= "back-link" href="">
+        <div class="icons" id="back-circle">
+          <img id="back-icon" src="./assets/icons/back.svg" alt="back-icon">
+        </div>
+      </a>
+    </header>
+
+
+    <div class="source">
+      <p>Film Information Source</p>
+      <p>Sight and Sound Greatest Films of All Time, Wikipedia</p>
+    </div>
+
+    <img id="continue-icon" src="./assets/icons/back.svg" alt="continue-icon">
+
+    
+    <div class="detail-display">
+
+
+      <img id="poster-detail-img" src="" alt="poster-detail">
+
+      <div class="detail">
+
+        <div class="detail-info">
+          <p id="movie-title" class="animated"></p>
+
+          <div id="year-area">
+            <p id="year" class="animate-paragraph"></p>
+          </div>
+
+          <div id="credits">
+            <div id="director">
+              <p class="animate-paragraph">Directed by</p>
+              <p class="animate-paragraph" id="director-detail"></p>
+            </div>
+            <div id="producer">
+              <p class="animate-paragraph">Produced by</p>
+              <p class="animate-paragraph" id="producer-detail"></p>
+            </div>
+            <div id="writer">
+              <p class="animate-paragraph">Written by</p>
+              <p class="animate-paragraph" id="writer-detail"></p>
+            </div>
+            <div id="cast">
+              <p class="animate-paragraph">Featuring</p>
+              <p class="animate-paragraph" id="cast-detail"></p>
+            </div>
+            <div id="time">
+              <p class="animate-paragraph">Running time</p>
+              <p class="animate-paragraph" id="time-detail"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="poster-detail-icons">
+          <img id="my-favorites-icon" src="./assets/icons/star.svg" alt="my-favorites-icon">
+          <img id="seen-before-icon" src="./assets/icons/seen.svg" alt="seen-before-icon">
+          <img id="download-icon" src="./assets/icons/download.svg" alt="download-icon">
+        </div>
+
+      </div>
+
+
+      </div>
+
+  </body>
+</html>

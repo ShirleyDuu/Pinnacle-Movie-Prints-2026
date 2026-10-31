@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="UTF-8">
+
+  <head>
+    <title>Pinnacle Movie Prints</title>
+    <link rel="stylesheet" href="css/style.css?v=webgl-curl-3">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
+    <script defer src="js/movieData.js"></script>
+    <script defer src="js/posters.js?v=color-default-2"></script>
+    <script defer src="js/color-order.js?v=color-order-4"></script>
+    
+    <script defer src="js/sorting-functions.js?v=sorting-navigators-2"></script>
+    <script defer src="js/color-background.js?v=color-glass-1"></script>
+    <script defer src="js/sorting-navigators.js?v=year-navigator-1"></script>
+    <script defer src="js/poster-corner-curl.js?v=poster-corner-curl-10"></script>
+    <script defer src="js/update-sorting.js?v=sorting-navigators-1"></script>
+    <script defer src="js/search-movie.js"></script>
+    <script defer src="js/click-back.js?v=sorting-navigators-1"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  
+  <body>
+
+    <header class="home-gallery-header">
+
+      <div class="icons-and-search">
+        <div class="my-favorites-and-search">
+          <a href="./my-favorites.html">
+            <div class="icons" id="star-circle">
+              <img id="my-favorites-icon" src="./assets/icons/star.svg" alt="my-favorites-icon">
+            </div>
+          </a>
+
+        <div id="search-bar-elements">
+          <label for="search-input" class="visually-hidden">Search movies:</label>
+          <input type="text" id="search-input" placeholder="Search by movie title, year, director, actor...">
+          <img id="search-icon" src="./assets/icons/search.svg" alt="search-icon">
+        </div>
+
+
+      
+  
+        <div class="sort-by">
+          <div id="sort-by-texts">
+            <p>Sort By</p>
+            <p id="sorting-mode">Color</p>
+          </div>
+  
+          <div class="icons color-mode" id="sorting-circle">
+            <img id="sorting-icon" src="./assets/icons/color.png" alt="sorting-icon">
+          </div>
+        </div>
+      </div>
+
+    </header>
+
+    <a href="./about.html">
+      <div class="icons" id="about-circle">
+        <img id="about-icon" src="./assets/icons/about.svg" alt="about-icon">
+      </div>
+    </a>
+
+    <a href="./seen-before.html">
+      <div class="icons" id="seen-circle">
+        <img id="seen-before-icon" src="./assets/icons/seen.svg" alt="seen-before-icon">
+      </div>
+    </a>
+    
+
+
+    <div class="gallery-poll-row">
+      <a href="https://www.bfi.org.uk/sight-and-sound/greatest-films-all-time" id="poll-title" target="_blank">
+        2022 Sight and Sound Greatest Films of All Time poll
+      </a>
+    </div>
+
+    <div id="poster-gallery"></div>
+    <div class="color-spectrum" role="slider" aria-label="Color sorting position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+      <span class="color-spectrum-marker" aria-hidden="true"></span>
+    </div>
+    <div id="ranking-navigator" class="sorting-navigator" role="slider" aria-label="Ranking position" aria-valuemin="1" aria-valuemax="168" aria-valuenow="1" tabindex="0">
+      <span class="navigator-bound navigator-start">1</span>
+      <span class="navigator-track" aria-hidden="true"></span>
+      <span class="navigator-endpoint navigator-endpoint-start" aria-hidden="true"></span>
+      <span class="navigator-endpoint navigator-endpoint-end" aria-hidden="true"></span>
+      <span class="navigator-thumb" aria-hidden="true"></span>
+      <span class="navigator-current-rank" aria-hidden="true">1</span>
+      <span class="navigator-bound navigator-end">168</span>
+    </div>
+    <div id="year-navigator" class="sorting-navigator" role="slider" aria-label="Year position" aria-valuemin="1924" aria-valuemax="2019" aria-valuenow="1924" tabindex="0">
+      <span class="navigator-bound navigator-start">1924</span>
+      <span class="navigator-track" aria-hidden="true"></span>
+      <span class="navigator-endpoint navigator-endpoint-start" aria-hidden="true"></span>
+      <span class="navigator-endpoint navigator-endpoint-end" aria-hidden="true"></span>
+      <span class="navigator-thumb" aria-hidden="true"></span>
+      <span class="navigator-current-rank navigator-current-year" aria-hidden="true">1924</span>
+      <span class="navigator-bound navigator-end">2019</span>
+    </div>
+    <div id="title-navigator" class="sorting-navigator" role="slider" aria-label="Title position" aria-valuemin="A" aria-valuemax="#" aria-valuenow="A" tabindex="0">
+      <span class="navigator-track" aria-hidden="true"></span>
+      <span class="title-labels" aria-hidden="true"></span>
+      <span class="title-marker" aria-hidden="true"></span>
+    </div>
+
+
+    <div id="popup-container">
+      <div id="popup-content">
+      <div class="search-result-header">
+        <div class="icons" id="close-circle">
+          <img id="close-icon" src="./assets/icons/close.svg" alt="close-icon">
+        </div>
+
+        <p id="search-result-title"></p>
+      </div>
+
+        <div id="popup-posters"></div>
+      </div>
+    </div>
+
+
+  </body>
+</html>

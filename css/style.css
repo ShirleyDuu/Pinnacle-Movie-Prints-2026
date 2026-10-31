@@ -1,0 +1,748 @@
+/*----------------- overall display layout -----------------*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* One shared vertical rail for the Color control, spectrum, and info icon. */
+    --right-control-inset: 3vw;
+    --right-control-center-offset: 22.5px;
+}
+
+header.home-gallery-header {
+    padding: 40px 3vw 0 3vw;
+    position: fixed;
+    z-index: 10;
+    width: 100%;
+    height: 145px;
+    background: linear-gradient(
+        to bottom,
+        rgba(20, 20, 20, 0.72) 0%,
+        rgba(20, 20, 20, 0.52) 35%,
+        rgba(20, 20, 20, 0.20) 67%,
+        rgba(20, 20, 20, 0) 100%
+    );
+    transition: background 550ms ease;
+}
+
+/* In Color mode, the dissolving header and its two glass controls borrow the
+   currently active poster-group hue instead of introducing a separate black. */
+body.color-sorting header.home-gallery-header {
+    background: linear-gradient(
+        to bottom,
+        var(--color-sorting-header-start) 0%,
+        var(--color-sorting-header-mid) 35%,
+        var(--color-sorting-header-fade) 67%,
+        transparent 100%
+    );
+}
+
+/* A masked layer lets both the tint and the glass blur dissolve together,
+   rather than ending in a visible horizontal edge. */
+header.home-gallery-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.78) 35%, rgba(0, 0, 0, 0.30) 67%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.78) 35%, rgba(0, 0, 0, 0.30) 67%, transparent 100%);
+}
+
+header.home-gallery-header > * {
+    position: relative;
+    z-index: 1;
+}
+
+body {
+    background: #000000;
+    font-family: 'Inter', sans-serif;
+    font-weight: 200;
+}
+
+body.color-sorting {
+    background: var(--color-sorting-background, #a82b2b);
+    transition: background-color 550ms ease;
+}
+
+p {
+    font-size: 14px;
+    color: rgb(255, 255, 255);
+}
+
+
+/*----------------- search -----------------*/
+
+#search-bar-elements {
+    display: flex;
+    position: relative; 
+}
+
+#search-input {
+    width: 30vw;
+    height: 45px;
+    border: 1px solid rgb(255, 255, 255);
+    border-radius: 45px;
+    display: flex;
+    align-items: center;
+    /* The search field keeps a consistent frosted-glass surface even as the
+       larger header itself dissolves into the page. */
+    background-color: rgba(20, 20, 20, 0.40);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+    padding: 18px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 200;
+    padding-right: 50px; 
+}
+
+#search-input:hover {
+    background-color: rgba(115, 115, 115, 0.3);
+}
+
+body.color-sorting #search-input,
+body.color-sorting #sorting-mode {
+    background-color: var(--color-sorting-glass-background);
+    transition: background-color 550ms ease;
+}
+
+#search-icon {
+    position: absolute;
+    right: 18px; 
+    top: 50%; 
+    transform: translateY(-50%); 
+    width: 23px;
+}
+
+
+#search-input::placeholder {
+    color: white; 
+}
+
+#search-input:focus {
+    outline: none; /* Removes the blue border/outline on focus */
+}
+
+/* Label */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+
+/*--------------- poll-title ----------------*/
+
+.icons-and-search{
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+
+.my-favorites-and-search {
+    display:flex;
+    gap: 3vw;
+}
+
+
+#poll-title {
+    text-decoration: none;
+    color: rgb(255, 255, 255);
+}
+
+.gallery-poll-row {
+    margin: 0 calc(6vw + 45px);
+    /* Its first text baseline starts alongside the top of the color spectrum. */
+    padding-top: 118px;
+    padding-bottom: 20px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+
+#poll-title:hover {
+    text-decoration: underline; 
+    text-decoration-color: rgb(108, 108, 108); 
+}
+
+
+a{
+    text-decoration: none;
+}
+
+/*----------------- sorting -----------------*/
+
+.sort-by {
+    display: flex;
+    justify-content: flex-end;
+    gap: 3vw;
+    position: absolute; 
+    /* The header already has the shared right inset as padding. */
+    right: 0;
+}
+
+#sort-by-texts {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    height: 45px;
+}
+
+/* Each active sorting name uses the same 1px, 45px-high outline language as
+   the circular controls. The fixed width is sized from “Ranking” with the
+   same 16px inset as the vertical inset, so all modes share one stable frame. */
+#sorting-mode {
+    width: 88px;
+    height: 45px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(255, 255, 255);
+    border-radius: 999px;
+    background-color: rgba(20, 20, 20, 0.40);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#sorting-icon {
+    width: 22px;
+    height: 22px;
+}
+
+/* The color artwork itself fills the sorting circle; other sorting icons retain their original sizing. */
+#sorting-circle.color-mode {
+    overflow: hidden;
+}
+
+#sorting-circle.color-mode #sorting-icon {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/*----------------- icons -----------------*/
+
+#my-favorites-icon {
+    width: 25px;
+    height: 25px;
+}
+
+#about-icon{
+    width: 24px;
+    position: absolute;
+}
+
+#about-circle {
+    position: fixed;
+    bottom: 40px;
+    right: var(--right-control-inset);
+}
+#seen-before-icon {
+    width: 27px;
+}
+#seen-circle {
+    position: fixed;
+    bottom: 40px;
+    left: 3vw;
+}
+
+.icons {
+    width: 45px;
+    height: 45px;
+    border: 1px solid rgb(255, 255, 255);
+    border-radius: 50px; 
+    display: flex;
+    align-items: center; 
+    justify-content: center; 
+}
+
+.icons:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+#back-icon {
+    width: 27px;
+    height: 27px;
+    z-index: 10; 
+}
+
+#back-circle {
+    position: fixed;
+    top: 40px;
+    left: 3vw;
+    z-index: 10; 
+    backdrop-filter: blur(10px); 
+}
+
+
+/*--------------- poster-gallery --------------*/
+
+#poster-gallery {
+    margin: 0 calc(6vw + 45px);
+    padding-top: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; 
+    gap: 1.5vw; 
+    padding-bottom: 45px;
+}
+
+.color-spectrum {
+    position: fixed;
+    z-index: 5;
+    top: 118px;
+    /* Keep the spectrum centered on the 45px Color and info icon axis. */
+    right: calc(var(--right-control-inset) + var(--right-control-center-offset) - 8px);
+    bottom: 118px;
+    width: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    display: none;
+    background: linear-gradient(
+        to bottom,
+        #bb2e31 0%,
+        #d6502b 10%,
+        #f29b2c 18%,
+        #ffd22c 28%,
+        #d7d42c 36%,
+        #69a934 47%,
+        #419b91 58%,
+        #3499d5 68%,
+        #2b63ae 76%,
+        #754394 83%,
+        #c00091 86%,
+        #b02c98 88%,
+        #955c91 90%,
+        #ababab 92%,
+        #737373 95%,
+        #383838 98%,
+        #141414 100%
+    );
+    cursor: pointer;
+    touch-action: none;
+    outline: none;
+}
+
+body.color-sorting .color-spectrum {
+    display: block;
+}
+
+.color-spectrum:focus-visible {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.color-spectrum-marker {
+    position: absolute;
+    left: -19px;
+    top: 0;
+    width: 13px;
+    height: 14px;
+    transform: translateY(-50%);
+    cursor: grab;
+    pointer-events: auto;
+    transition: top 260ms ease-out;
+}
+
+.color-spectrum-marker:active { cursor: grabbing; }
+
+.color-spectrum-marker::before,
+.color-spectrum-marker::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    border-radius: 1px;
+    background: #fff;
+    transform-origin: right center;
+}
+
+.color-spectrum-marker::before { transform: rotate(45deg); }
+.color-spectrum-marker::after { transform: rotate(-45deg); }
+
+/*--------------- ranking / title navigators --------------*/
+
+.sorting-navigator {
+    position: fixed;
+    z-index: 5;
+    top: 118px;
+    right: calc(var(--right-control-inset) + var(--right-control-center-offset));
+    bottom: 118px;
+    width: 80px;
+    display: none;
+    cursor: pointer;
+    touch-action: none;
+    outline: none;
+}
+
+/* Rank labels sit outside this shorter track, so the overall Rank navigator
+   spans the same top-to-bottom distance as the Color spectrum. */
+#ranking-navigator,
+#year-navigator {
+    top: 145px;
+    bottom: 145px;
+}
+
+body.ranking-sorting #ranking-navigator,
+body.year-sorting #year-navigator,
+body.title-sorting #title-navigator {
+    display: block;
+}
+
+.sorting-navigator:focus-visible {
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+}
+
+.navigator-track {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.navigator-bound {
+    position: absolute;
+    right: -10px;
+    width: 20px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 200;
+    line-height: 16px;
+    text-align: center;
+}
+
+/* Four-digit year endpoints need a wider but still perfectly centered label
+   box: its 40px width and -20px offset put the text center on the 1px track. */
+#year-navigator .navigator-bound {
+    right: -20px;
+    width: 40px;
+}
+
+.navigator-start { top: -27px; }
+.navigator-end { bottom: -27px; }
+
+.navigator-thumb {
+    position: absolute;
+    top: 0;
+    right: -7px;
+    width: 15px;
+    height: 15px;
+    transform: translateY(-50%);
+    border: 1px solid #fff;
+    border-radius: 50%;
+    background: #000;
+    transition: top 180ms ease-out;
+}
+
+.navigator-endpoint {
+    position: absolute;
+    /* Center the 4px dot on the 1px track's visual center. */
+    right: -1.5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.navigator-endpoint-start { top: -2px; }
+.navigator-endpoint-end { bottom: -2px; }
+
+.navigator-current-rank {
+    position: absolute;
+    top: 0;
+    right: 15px;
+    min-width: 16px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 200;
+    line-height: 16px;
+    text-align: right;
+    transform: translateY(-50%);
+    transition: top 180ms ease-out;
+}
+
+.title-labels {
+    position: absolute;
+    top: 0;
+    /* A fixed width gives every letter the exact same visual center. */
+    right: -11px;
+    bottom: 0;
+    width: 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #fff;
+    /* Slightly larger labels still occupy the same fixed navigator height. */
+    font-size: 11px;
+    line-height: 11px;
+    text-align: center;
+}
+
+.title-label {
+    display: block;
+    width: 100%;
+    opacity: 0.4;
+    transition: opacity 180ms ease-out;
+}
+
+.title-label.is-active {
+    opacity: 1;
+}
+
+.title-marker {
+    position: absolute;
+    top: 0;
+    /* Same 10px / 1px chevron construction and virtual-bar spacing as Color. */
+    /* Pull the chevron a tiny amount closer to the letter column. */
+    right: 12px;
+    width: 13px;
+    height: 14px;
+    transform: translateY(-50%);
+    transition: top 180ms ease-out;
+}
+
+.title-marker::before,
+.title-marker::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    border-radius: 1px;
+    background: #fff;
+    transform-origin: right center;
+}
+
+.title-marker::before { transform: rotate(45deg); }
+.title-marker::after { transform: rotate(-45deg); }
+
+/* Title uses letters alone as its track; it deliberately has no vertical rule. */
+#title-navigator .navigator-track {
+    display: none;
+}
+
+@keyframes breathingEffect {
+    0%, 100% {
+        transform: scale(0.97);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+#poster-gallery img {
+    width: 100%;
+    height: auto;
+    border: 1px solid rgb(255, 255, 255);
+    transition: clip-path 260ms cubic-bezier(.18, .84, .24, 1), transform 260ms cubic-bezier(.18, .84, .24, 1), filter 180ms ease-out, opacity 120ms ease-out;
+    display: block;
+    transform-origin: center;
+}
+
+#poster-gallery a {
+    flex: 0 0 calc((100% - 4.5vw) / 4);
+    min-width: 0;
+    position: relative;
+    isolation: isolate;
+    perspective: 900px;
+}
+
+/* A WebGL mesh redraws the whole poster while its nearest corner is lifted.
+   Unlike an overlay, the original image silhouette itself changes shape. */
+.poster-curl-canvas {
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+}
+
+#poster-gallery a.poster-curl-active .poster-curl-canvas {
+    opacity: 1;
+}
+
+#poster-gallery a.poster-curl-active img {
+    animation: none;
+    transform: translateZ(0);
+}
+
+/* Browser-safe fallback: the actual image corner is cut and pulled, not a
+   decorative layer. WebGL replaces this image only when its mesh is ready. */
+#poster-gallery a.poster-curl-active.curl-top-left img { clip-path: polygon(0 24%, 24% 0, 100% 0, 100% 100%, 0 100%); transform: translate(5px, 5px) rotate(-1.2deg); }
+#poster-gallery a.poster-curl-active.curl-top-right img { clip-path: polygon(0 0, 76% 0, 100% 24%, 100% 100%, 0 100%); transform: translate(-5px, 5px) rotate(1.2deg); }
+#poster-gallery a.poster-curl-active.curl-bottom-left img { clip-path: polygon(0 0, 100% 0, 100% 100%, 24% 100%, 0 76%); transform: translate(5px, -5px) rotate(1.2deg); }
+#poster-gallery a.poster-curl-active.curl-bottom-right img { clip-path: polygon(0 0, 100% 0, 100% 76%, 76% 100%, 0 100%); transform: translate(-5px, -5px) rotate(-1.2deg); }
+
+#poster-gallery a.poster-curl-active.webgl-curl-ready img {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce), (hover: none) {
+    .poster-curl-canvas { display: none; }
+}
+
+
+/*--------------- search-popup --------------*/
+
+#popup-container {
+    z-index: 15;
+    display:none; 
+    position:fixed; 
+    top:0; 
+    left:0; 
+    width:100vw; 
+    justify-content:center; 
+    align-items:center; 
+    backdrop-filter:blur(10px);
+}
+
+#popup-content {
+    width: 100vw;
+    height: 100vh;
+    position:relative; 
+    background-color:transparent; 
+    overflow-y: auto; /* Allows scrolling if content overflows */
+}
+
+#popup-posters {
+    height: 100vh;
+    padding: 125px 3vw 125px 3vw; 
+    display: flex;
+    align-items: center;
+    gap: 1.5vw;
+    overflow-x: auto; 
+    box-sizing: border-box; 
+}
+
+#popup-posters img {
+    border: 1px solid rgb(255, 255, 255);
+    width: 22vw;
+    transition: transform 0.8s ease-in-out, filter 0.8s ease-in-out;
+    display: block;
+    transform-origin: center;
+}
+
+#popup-posters img:hover {
+    animation: breathingEffect 2s ease-in-out infinite;
+}
+
+.search-result-header {
+    width: 100vw;
+    height: 125px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+}
+
+#search-result-title {
+    font-size: 19px;
+    margin: 3vw;
+}
+
+#close-circle {
+    position:fixed; 
+    right: 0vw;
+    margin: 3vw;
+    cursor:pointer;
+}
+
+#close-icon {
+    width: 40px;
+}
+
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px black inset !important;
+    -webkit-text-fill-color: white !important;
+}
+
+
+
+
+/* ----------------------------------------------------------- */
+
+
+@media (max-width: 700px) {
+    .color-spectrum {
+        top: 108px;
+        right: calc(var(--right-control-inset) + var(--right-control-center-offset) - 6px);
+        bottom: 108px;
+        width: 12px;
+    }
+    .sorting-navigator {
+        top: 108px;
+        bottom: 108px;
+    }
+    #ranking-navigator,
+    #year-navigator {
+        top: 135px;
+        bottom: 135px;
+    }
+    .gallery-poll-row {
+        margin: 0 18%;
+    }
+    #poll-title {
+        width: auto;
+        text-align: left;
+    }
+
+    #poster-gallery {
+        margin: 0 18%;
+        display: flex;
+        flex-direction: column; 
+    }
+    
+    #poster-gallery img {
+        width: 100%; 
+        margin: 10px 0 25px 0; 
+    }
+
+    #poster-gallery a {
+        flex-basis: 100%;
+    }
+
+    #popup-container {
+        width: 100%;
+    }
+    
+    #popup-content {
+        width: 100%;
+    }
+    
+    #popup-posters {
+        margin: 0 15%;
+        display: flex;
+        flex-direction: column; 
+    }
+
+    #popup-posters img{
+        width: 100%; 
+        margin: 0px 0 40px 0; 
+
+    }
+
+}
+
