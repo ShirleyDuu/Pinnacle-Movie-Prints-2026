@@ -64,7 +64,7 @@ function removePosterFromFavorites(posterSrc) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function refreshDetailActionIcons() {
     const posterDetailImg = document.getElementById('poster-detail-img');
     // Check if the current poster is in the favorites array
     if (starImages.includes(posterDetailImg.src)) {
@@ -74,7 +74,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // If the poster is not a favorite, show the empty star
         starIcon.src = './assets/icons/star.svg';
     }
-});
+}
+document.addEventListener('DOMContentLoaded', refreshDetailActionIcons);
 
 // -------------------- seen before -------------------- //
 
@@ -119,7 +120,7 @@ function removePosterFromSeen(posterSrc) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+function refreshSeenIcon() {
     const posterDetailImg = document.getElementById('poster-detail-img');
     // Check if the current poster is in seen array
     if (seenImages.includes(posterDetailImg.src)) {
@@ -129,6 +130,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // If the poster is not seen, show the empty seen
         seenIcon.src = './assets/icons/seen.svg';
     }
+}
+document.addEventListener('DOMContentLoaded', refreshSeenIcon);
+document.addEventListener('posterchange', () => {
+    refreshDetailActionIcons();
+    refreshSeenIcon();
 });
 
 

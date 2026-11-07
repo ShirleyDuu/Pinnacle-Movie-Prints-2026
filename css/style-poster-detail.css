@@ -1,40 +1,117 @@
-.poster-detail-curl {
-    height: calc(100vh - 120px);
+:root {
+    /* Keep the large poster optically centred, but bias it slightly left to
+       make room for the film copy on the right (as in the reference layout). */
+    --detail-poster-offset: clamp(-52px, -2.5vw, -30px);
+    --detail-rail-gap: clamp(28px, 3vw, 56px);
+    --detail-info-gap: clamp(46px, 3.3vw, 64px);
+    --detail-rail-width: clamp(74px, 8.5vw, 142px);
+    /* Updated from the actual poster width so every horizontal gap stays
+       identical even when films have different aspect ratios. */
+    --detail-poster-half: 210px;
+}
+
+.detail-display { min-height: 100vh; }
+
+/* Preserve the original fixed back control exactly. */
+#back-circle {
     position: fixed;
-    right: 49%;
+    top: 40px;
+    left: 3vw;
+    right: auto;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+}
+
+/* The rail preserves the order of the page the visitor came from. */
+.detail-rail {
+    /* The rail itself reaches the viewport edges. Its scroll padding makes
+       only the first and last thumbnails stop level with the main poster. */
+    position: fixed;
+    top: 0;
+    right: calc(50% - var(--detail-poster-offset) + var(--detail-poster-half) + var(--detail-rail-gap));
+    width: var(--detail-rail-width);
+    height: 100vh;
+    box-sizing: border-box;
+    overflow-y: auto;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: calc((100vh - min(86vh, 860px)) / 2) 3px;
+}
+
+.detail-rail::-webkit-scrollbar { display: none; }
+
+.detail-rail-poster {
+    width: 100%;
+    padding: 0;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    opacity: .28;
+    filter: brightness(.58);
+    transform: scale(.96);
+    transition: opacity 220ms ease, filter 220ms ease, transform 220ms ease, border-color 220ms ease;
+}
+
+.detail-rail-poster:hover,
+.detail-rail-poster:focus-visible {
+    opacity: .72;
+    filter: brightness(.85);
+    outline: none;
+}
+
+.detail-rail-poster.is-selected {
+    opacity: 1;
+    filter: none;
+    border-color: rgba(255, 255, 255, .95);
+    transform: scale(1);
+}
+
+.detail-rail-poster img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.poster-detail-curl {
+    position: fixed;
+    top: 50%;
+    left: calc(50% + var(--detail-poster-offset));
+    height: min(86vh, 860px);
+    transform: translate(-50%, -50%);
 }
 
 #poster-detail-img {
     border: 1px solid rgb(255, 255, 255);
     height: 100%;
+    max-width: 100%;
     position: static;
+    display: block;
 }
 
-
-.detail-display{
-    display: flex;
-    height: 100vh;
-    position: absolute;
-    top: 0;
-    align-items: center;
-}
-
-.detail{
-    display: flex;
-    flex-direction: column; 
-    justify-content: end;
-    gap: 4vh;
-    height: calc(100vh - 120px);
+.detail {
     position: fixed;
-    left: 55%;
-
+    top: 0;
+    left: calc(50% + var(--detail-poster-offset) + var(--detail-poster-half) + var(--detail-info-gap));
+    width: min(23vw, 390px);
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    /* Keep the detail content anchored from the bottom, matching the
+       original poster-detail composition and the action icons. */
+    justify-content: flex-end;
+    gap: 4vh;
+    align-self: stretch;
+    padding: 0 0 calc((100vh - min(86vh, 860px)) / 2);
 }
 
-.detail-info{
-    width: 24vw;
-    margin: 60px 0;
+.detail-info {
+    width: 100%;
+    margin: 0 0 4vh;
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
     gap: 4vh;
 }
 
@@ -95,17 +172,42 @@
 
 /*----------------- phone portrait screen ----------------*/
 
+@media (max-width: 900px) {
+    .detail-rail { position: static; right: auto; }
+    .poster-detail-curl { position: relative; top: auto; left: auto; transform: none; }
+    .detail { position: static; left: auto; width: auto; }
+}
+
 @media (max-width: 700px) {
     .detail-display{
         position: static;
         display: flex;
         flex-direction: column;
+        padding: 100px 12% 10vh;
+        min-height: auto;
+        gap: 36px;
+    }
+
+    .detail-rail {
+        position: static;
+        width: 100%;
+        height: auto;
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-direction: row;
+        gap: 10px;
+        order: -1;
+    }
+
+    .detail-rail-poster {
+        flex: 0 0 66px;
     }
 
     .detail{
         position: static;
-        width: 75%;
-        margin-top: 100vh;
+        width: 100%;
+        margin-top: 0;
         padding-bottom: 10vh;
         height: 100vh;
     }
@@ -118,13 +220,13 @@
     }
 
     .poster-detail-curl {
-        position: absolute;
-        top: 50%;
-        left: 50%;
+        position: relative;
+        top: auto;
+        left: auto;
         right: auto;
         width: 75%;
         height: auto;
-        transform: translate(-50%, -50%);
+        transform: none;
     }
 
     #poster-detail-img {
@@ -172,6 +274,9 @@
 @media screen and (min-width: 800px) and (max-width: 900px) {
     .detail-display{
         position: static;
+        --detail-gap: 3vw;
+        --detail-rail-width: 72px;
+        padding-left: calc(3vw + 45px + var(--detail-gap));
     }
 
 
@@ -194,9 +299,9 @@
     }
 
     .detail {
-        position: relative; 
-        margin-top: 10vh; 
-        width: 40%;
+        position: static;
+        margin-top: 0;
+        width: 100%;
         height: auto;
         margin-bottom: 10vh; 
         left: 45%;
@@ -214,11 +319,11 @@
     }
 
     .poster-detail-curl {
-        position: fixed;
-        top: 50%;
-        right: 49%;
+        position: relative;
+        top: auto;
+        right: auto;
         height: 80%;
-        transform: translate(-50%, -50%);
+        transform: none;
         margin-bottom: 10vh; /* Bottom margin of 10vh */
     }
 

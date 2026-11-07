@@ -168,6 +168,10 @@ function discardRenderer(link) {
 }
 
 function rendererFor(link) {
+  // A newly selected detail poster may still be decoding. Leave it eligible
+  // for a later hover instead of incorrectly marking its curl unavailable.
+  const image = link.querySelector('img');
+  if (!image || !image.complete || !image.naturalWidth) return null;
   if (curlUnavailable.has(link)) return null;
   let renderer = curlRenderers.get(link);
   // When returning with the browser Back button, the page can be restored
@@ -230,5 +234,12 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('pageshow', event => {
     if (!event.persisted) return;
     document.querySelectorAll('.poster-curl-target').forEach(discardRenderer);
+  });
+
+  // A detail-page selection swaps the central image in place. Its texture
+  // must be rebuilt so a previous poster is never curled over the new one.
+  document.addEventListener('posterchange', () => {
+    const detailTarget = document.querySelector('.poster-detail-curl');
+    if (detailTarget) discardRenderer(detailTarget);
   });
 });
