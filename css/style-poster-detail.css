@@ -1,8 +1,13 @@
-#poster-detail-img {
-    border: 1px solid rgb(255, 255, 255);
+.poster-detail-curl {
     height: calc(100vh - 120px);
     position: fixed;
     right: 49%;
+}
+
+#poster-detail-img {
+    border: 1px solid rgb(255, 255, 255);
+    height: 100%;
+    position: static;
 }
 
 
@@ -112,14 +117,21 @@
         margin: 20vh 0 0 0;
     }
 
-    #poster-detail-img {
-        border: 1px solid rgb(255, 255, 255);
-        position: absolute; 
+    .poster-detail-curl {
+        position: absolute;
         top: 50%;
         left: 50%;
+        right: auto;
         width: 75%;
-        height: auto; 
+        height: auto;
         transform: translate(-50%, -50%);
+    }
+
+    #poster-detail-img {
+        width: 100%;
+        height: auto;
+        position: static;
+        transform: none;
     }
 
 
@@ -201,14 +213,20 @@
         top: 10vh; 
     }
 
-    #poster-detail-img {
-        border: 1px solid rgb(255, 255, 255);
+    .poster-detail-curl {
         position: fixed;
         top: 50%;
+        right: 49%;
         height: 80%;
-        width: auto;
         transform: translate(-50%, -50%);
         margin-bottom: 10vh; /* Bottom margin of 10vh */
+    }
+
+    #poster-detail-img {
+        height: 100%;
+        width: auto;
+        position: static;
+        transform: none;
     }
 
 

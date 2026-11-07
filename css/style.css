@@ -565,6 +565,14 @@ body.title-sorting #title-navigator {
     perspective: 900px;
 }
 
+/* All poster surfaces—including saved collections and the detail view—share
+   the same WebGL curl renderer. */
+.poster-curl-target {
+    position: relative;
+    isolation: isolate;
+    perspective: 900px;
+}
+
 /* A WebGL mesh redraws the whole poster while its nearest corner is lifted.
    Unlike an overlay, the original image silhouette itself changes shape. */
 .poster-curl-canvas {
@@ -578,23 +586,23 @@ body.title-sorting #title-navigator {
     transition: opacity 120ms ease-out;
 }
 
-#poster-gallery a.poster-curl-active .poster-curl-canvas {
+.poster-curl-target.poster-curl-active .poster-curl-canvas {
     opacity: 1;
 }
 
-#poster-gallery a.poster-curl-active img {
+.poster-curl-target.poster-curl-active > img {
     animation: none;
     transform: translateZ(0);
 }
 
 /* Browser-safe fallback: the actual image corner is cut and pulled, not a
    decorative layer. WebGL replaces this image only when its mesh is ready. */
-#poster-gallery a.poster-curl-active.curl-top-left img { clip-path: polygon(0 24%, 24% 0, 100% 0, 100% 100%, 0 100%); transform: translate(5px, 5px) rotate(-1.2deg); }
-#poster-gallery a.poster-curl-active.curl-top-right img { clip-path: polygon(0 0, 76% 0, 100% 24%, 100% 100%, 0 100%); transform: translate(-5px, 5px) rotate(1.2deg); }
-#poster-gallery a.poster-curl-active.curl-bottom-left img { clip-path: polygon(0 0, 100% 0, 100% 100%, 24% 100%, 0 76%); transform: translate(5px, -5px) rotate(1.2deg); }
-#poster-gallery a.poster-curl-active.curl-bottom-right img { clip-path: polygon(0 0, 100% 0, 100% 76%, 76% 100%, 0 100%); transform: translate(-5px, -5px) rotate(-1.2deg); }
+.poster-curl-target.poster-curl-active.curl-top-left > img { clip-path: polygon(0 24%, 24% 0, 100% 0, 100% 100%, 0 100%); transform: translate(5px, 5px) rotate(-1.2deg); }
+.poster-curl-target.poster-curl-active.curl-top-right > img { clip-path: polygon(0 0, 76% 0, 100% 24%, 100% 100%, 0 100%); transform: translate(-5px, 5px) rotate(1.2deg); }
+.poster-curl-target.poster-curl-active.curl-bottom-left > img { clip-path: polygon(0 0, 100% 0, 100% 100%, 24% 100%, 0 76%); transform: translate(5px, -5px) rotate(1.2deg); }
+.poster-curl-target.poster-curl-active.curl-bottom-right > img { clip-path: polygon(0 0, 100% 0, 100% 76%, 76% 100%, 0 100%); transform: translate(-5px, -5px) rotate(-1.2deg); }
 
-#poster-gallery a.poster-curl-active.webgl-curl-ready img {
+.poster-curl-target.poster-curl-active.webgl-curl-ready > img {
     opacity: 0;
 }
 

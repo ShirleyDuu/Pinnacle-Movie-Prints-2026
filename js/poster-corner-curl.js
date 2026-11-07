@@ -156,9 +156,27 @@ const curlRenderers = new WeakMap();
 // one failed attempt per poster rather than leaking a new WebGL context on
 // every pointer movement while the CSS fallback is active.
 const curlUnavailable = new WeakSet();
+
+function discardRenderer(link) {
+  const renderer = curlRenderers.get(link);
+  if (renderer) {
+    cancelAnimationFrame(renderer.frame);
+    renderer.canvas.remove();
+    curlRenderers.delete(link);
+  }
+  link.classList.remove('webgl-curl-ready', 'poster-curl-active', ...curlCorners.map(corner => `curl-${corner}`));
+}
+
 function rendererFor(link) {
   if (curlUnavailable.has(link)) return null;
   let renderer = curlRenderers.get(link);
+  // When returning with the browser Back button, the page can be restored
+  // from its back-forward cache while its WebGL drawing context has been
+  // discarded. Recreate the canvas instead of keeping a frozen renderer.
+  if (renderer && renderer.gl.isContextLost()) {
+    discardRenderer(link);
+    renderer = null;
+  }
   if (!renderer) {
     renderer = createCurlRenderer(link);
     if (renderer) curlRenderers.set(link, renderer);
@@ -168,10 +186,17 @@ function rendererFor(link) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const gallery = document.getElementById('poster-gallery');
-  if (!gallery) return;
+  // Sorting, searching, and saved collections can replace poster cards after
+  // page load. Find and enrol the current card on first hover instead of
+  // keeping a one-time list that would leave newly rendered posters inert.
+  const curlTargetSelector = '#poster-gallery a, #my-favorites-posters a, #seen-before-posters a, .poster-detail-curl';
+  const targetFor = element => {
+    const target = element.closest(curlTargetSelector);
+    if (target) target.classList.add('poster-curl-target');
+    return target;
+  };
   const updateCurl = event => {
-    const link = event.target.closest('#poster-gallery a'); if (!link) return;
+    const link = targetFor(event.target); if (!link) return;
     const rect = link.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
     const y = (event.clientY - rect.top) / rect.height;
@@ -193,12 +218,17 @@ document.addEventListener('DOMContentLoaded', () => {
     renderer.target = .42 + .46 * (1 - Math.min(1, Math.sqrt(distance) / .72));
     animateCurl(renderer);
   };
-  gallery.addEventListener('pointermove', updateCurl);
-  gallery.addEventListener('pointerout', event => {
-    const link = event.target.closest('#poster-gallery a');
+  document.addEventListener('pointermove', updateCurl);
+  document.addEventListener('pointerout', event => {
+    const link = event.target.closest('.poster-curl-target');
     if (!link || link.contains(event.relatedTarget)) return;
     link.classList.remove('poster-curl-active', ...curlCorners.map(corner => `curl-${corner}`));
     const renderer = curlRenderers.get(link);
     if (renderer) { renderer.target = 0; animateCurl(renderer); }
+  });
+
+  window.addEventListener('pageshow', event => {
+    if (!event.persisted) return;
+    document.querySelectorAll('.poster-curl-target').forEach(discardRenderer);
   });
 });
